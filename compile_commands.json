@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -pedantic -pedantic-errors -Werror -g -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/card.cpp.o -c /home/safff/Projects/PokerCalc2/src/card.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/card.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -pedantic -pedantic-errors -Werror -g -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/main.cpp.o -c /home/safff/Projects/PokerCalc2/src/main.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/main.cpp"
+}
+]
