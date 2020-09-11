@@ -103,17 +103,59 @@ static Equity::Eq calcRiver( Board board [[maybe_unused]],
         return Equity::Eq { 0, 0, 1 };
     };
 
-    auto sameCareEq =
-    [ & ]() {
+    auto sameCareEq = [ & ]() {
         Combo heroCombo { board, hero };
         Combo oppCombo { board, opp };
+
+        Card heroHiCard;
+        for ( auto heroIt = heroCombo.asSortedVector().rbegin();
+              heroIt != heroCombo.asSortedVector().rend() - 3;
+              ++heroIt ) {
+            auto heroItPlus1 = std::next( heroIt );
+            auto heroItPlus2 = std::next( heroItPlus1 );
+            auto heroItPlus3 = std::next( heroItPlus2 );
+
+            auto heroCard      = *heroIt;
+            auto heroCardPlus1 = *heroItPlus1;
+            auto heroCardPlus2 = *heroItPlus2;
+            auto heroCardPlus3 = *heroItPlus3;
+
+            if ( heroCard.eqValue( heroCardPlus1 ) &&
+                 heroCard.eqValue( heroCardPlus2 ) &&
+                 heroCard.eqValue( heroCardPlus3 ) )
+                heroHiCard = heroCard;
+        }
+
+        Card oppHiCard;
+        for ( auto oppIt = oppCombo.asSortedVector().rbegin();
+              oppIt != heroCombo.asSortedVector().rend() - 4;
+              ++oppIt ) {
+            auto oppItPlus1 = std::next( oppIt );
+            auto oppItPlus2 = std::next( oppItPlus1 );
+            auto oppItPlus3 = std::next( oppItPlus2 );
+
+            auto oppCard      = *oppIt;
+            auto oppCardPlus1 = *oppItPlus1;
+            auto oppCardPlus2 = *oppItPlus2;
+            auto oppCardPlus3 = *oppItPlus3;
+
+            if ( oppCard.eqValue( oppCardPlus1 ) &&
+                 oppCard.eqValue( oppCardPlus2 ) &&
+                 oppCard.eqValue( oppCardPlus3 ) )
+                oppHiCard = oppCard;
+        }
+        if ( heroHiCard > oppHiCard )
+            return Equity::Eq { 1, 0, 0 };
+        else if ( heroHiCard < oppHiCard )
+            return Equity::Eq { 0, 1, 0 };
+        return Equity::Eq { 0, 0, 1 };
     };
 
     switch ( heroStrength.getStrength() ) {
     case Strength::STRAIT_FLUSH: {
         switch ( oppStrength.getStrength() ) {
         case Strength::STRAIT_FLUSH: {
-            sameStraitFlushEq();
+            eq = sameStraitFlushEq();
             break;
         }
         default: {
