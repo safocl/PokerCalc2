@@ -1,0 +1,16 @@
+Card c2c { Value::v2, Suit::c };
+Card cAd { Value::vA, Suit::d };
+assert( !c2c.eqSuit( cAd ) &&
+        "not equivalent Suit data are equivalent" );
+assert( !c2c.eqValue( cAd ) &&
+        "not equivalent Value data are equivalent" );
+assert( c2c.eqValue( Card( cAd )++ ) &&
+        "Incorrect work of increment" );
+assert( cAd.eqValue( Card( c2c )-- ) &&
+        "Incorrect work of decrement" );
+assert( Card( Value::v2, Suit::c ) ==
+        Card( Value::v2, Suit::c ) &&
+        "Incorrect work of operator==" );
+assert( Card( Value::v5, Suit::h ).asStr() == "5h" &&
+        "Incorrect view card as string" );
+std::cout << "Card unit test done is success" << std::endl;

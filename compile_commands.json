@@ -1,12 +1,37 @@
 [
 {
   "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -pedantic -pedantic-errors -Werror -g -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/card.cpp.o -c /home/safff/Projects/PokerCalc2/src/card.cpp",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/board.cpp.o -c /home/safff/Projects/PokerCalc2/src/board.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/board.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/card.cpp.o -c /home/safff/Projects/PokerCalc2/src/card.cpp",
   "file": "/home/safff/Projects/PokerCalc2/src/card.cpp"
 },
 {
   "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -pedantic -pedantic-errors -Werror -g -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/main.cpp.o -c /home/safff/Projects/PokerCalc2/src/main.cpp",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/deck.cpp.o -c /home/safff/Projects/PokerCalc2/src/deck.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/deck.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/eval.cpp.o -c /home/safff/Projects/PokerCalc2/src/eval.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/eval.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/hand.cpp.o -c /home/safff/Projects/PokerCalc2/src/hand.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/hand.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/main.cpp.o -c /home/safff/Projects/PokerCalc2/src/main.cpp",
   "file": "/home/safff/Projects/PokerCalc2/src/main.cpp"
+},
+{
+  "directory": "/home/safff/Projects/PokerCalc2/build/src",
+  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/strength.cpp.o -c /home/safff/Projects/PokerCalc2/src/strength.cpp",
+  "file": "/home/safff/Projects/PokerCalc2/src/strength.cpp"
 }
 ]

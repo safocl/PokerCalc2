@@ -1,6 +1,9 @@
+#pragma once
+
 #include "card.hpp"
 #include <utility>
 
+namespace core::engine{
 class Hand final {
     std::pair< Card, Card > h;
 
@@ -11,6 +14,8 @@ public:
     bool operator>( const Hand & ) const;
     Card low() const;
     Card hight() const;
+    Card right() const;
+    Card left() const;
 };
 
 class HandTraits final {
@@ -25,3 +30,4 @@ public:
     bool is3gupConnector() const;
     bool isSingleSuit() const;
 };
+}

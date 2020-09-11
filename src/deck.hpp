@@ -1,19 +1,25 @@
-#include <array>
+#pragma once
+
+#include "board.hpp"
+#include <map>
+#include <string>
+#include <string_view>
 #include "card.hpp"
 
+namespace core::engine {
 class Deck final {
-    struct DeckNode final {
-        DeckNode(Value, Suit);
-        Card card;
-        bool isAvaible;
-    };
-    std::array< DeckNode, 52 > deck;
+    std::map< std::string_view, bool > deck;
+
+    void generate();
+    void zeroing();
 
 public:
     Deck();
     ~Deck();
     Deck( const Deck & ) = delete;
-    void generate( const Card &, const Card & );
-    void generate( const Card & );
+    Deck( Deck && )      = delete;
+    void update( const Board &, const Card &, const Card & );
+    void update( const Board &, const Card & );
     bool isAvaibleCard( const Card & );
 };
+}   // namespace core::engine

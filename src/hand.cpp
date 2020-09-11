@@ -1,6 +1,10 @@
 #include "hand.hpp"
+#include <cassert>
 
-Hand::Hand( Card l, Card r ) : h { l, r } {}
+namespace core::engine{
+Hand::Hand( Card l, Card r ) : h { l, r } {
+    assert( l != r && "Cards is equial" );
+}
 bool Hand::operator==( const Hand & o ) const {
     return ( h.first == o.h.first && h.second == o.h.second ) ||
            ( h.first == o.h.second && h.second == o.h.first );
@@ -21,6 +25,8 @@ Card Hand::low() const {
 Card Hand::hight() const {
     return h.first < h.second ? h.second : h.first;
 }
+Card Hand::right() const { return h.second; }
+Card Hand::left() const { return h.first; }
 
 HandTraits::HandTraits( const Hand & o ) : h( o ) {}
 bool HandTraits::isPair() const {
@@ -49,4 +55,5 @@ bool HandTraits::isSingleSuit() const {
     if ( isPair() )
         return false;
     return h.hight().eqSuit( h.low() );
+}
 }
