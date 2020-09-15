@@ -16,6 +16,6 @@ void Combo::set( Board b, Hand h ) {
     combo.push_back( h.right() );
     std::sort( combo.begin(), combo.end() );
 }
-std::vector< Card > Combo::asVector() const { return combo; }
+const std::vector< Card > & Combo::asSortedVector() const { return combo; }
 
 }   // namespace core::engine

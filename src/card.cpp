@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include "card.hpp"
@@ -75,13 +76,19 @@ std::string Card::asStr() const {
     case Value::vQ: str = "Q"; break;
     case Value::vK: str = "K"; break;
     case Value::vA: str = "A"; break;
+    default:
+        throw std::runtime_error(
+        "the card::as() method is called for a invalid card" );
     }
     switch ( s ) {
     case Suit::c: str += "c"; break;
     case Suit::h: str += "h"; break;
     case Suit::s: str += "s"; break;
     case Suit::d: str += "d"; break;
+    default:
+        throw std::runtime_error(
+        "the card::as() method is called for a invalid card" );
     }
     return str;
-}
+}   // namespace core::engine
 }   // namespace core::engine

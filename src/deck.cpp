@@ -16,8 +16,8 @@ void Deck::generate() {
 }
 
 void Deck::zeroing() {
-    for ( auto card : deck )
-        card.second = true;
+    for ( auto && deckNode : deck )
+        deckNode.second = true;
 }
 
 void Deck::update( const Board & board,
