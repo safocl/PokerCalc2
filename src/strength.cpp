@@ -1,367 +1,527 @@
+/**
+ *\file strength.cpp
+ *\copyright GPL-3.0-or-later
+ *\author safocl (megaSafocl)
+ *\date 2023
+ *
+ * \detail \"Copyright safocl (megaSafocl) 2023\"
+ This file is part of PokerCalc2.
+
+ PokerCalc2 is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation, either version 3 of the License, or any later version.
+
+ PokerCalc2 is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along with
+ PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include "utils.hpp"
 #include "strength.hpp"
 #include "board.hpp"
 #include "card.hpp"
 #include "combo.hpp"
-#include <bits/stdint-intn.h>
+
+#include <iostream>
 #include <iterator>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
+#include <algorithm>
 
 namespace core::engine {
-static bool hasStraitFlush( const Combo & );
-static bool hasCare( const Combo & );
-static bool hasFullHouse( const Combo & );
-static bool hasFlush( const Combo & );
-static bool hasStrait( const Combo & );
-static bool hasSet( const Combo & );
-static bool hasTwoPairs( const Combo & );
-static bool hasPair( const Combo & );
-static bool hasFlushDraw( const Combo & );
-static bool hasStraitDraw( const Combo & );
-static bool hasGutShot( const Combo & );
-static bool hasTwoOC( const Board &, const Hand & );
-static bool hasOneOC( const Board &, const Hand & );
 
-Strength::Strengthes Strength::getStrength() const {
-    return currentStrength;
+Strength::Result Strength::getStrength() const {
+    return { mCurrentStrength, { mSignificationCard } };
 }
 
-Strength::Strengthes Strength::calc( const Board & board,
-                                     const Hand &  hand ) {
+Strength::Result Strength::calc( const Board & board, const Hand & hand ) {
     const Combo combo { board, hand };
 
-    int currentStrengthInt { static_cast< int >( currentStrength ) };
+    std::underlying_type_t< decltype( mCurrentStrength ) > currentStrengthInt {};
 
-    if ( hasStraitFlush( combo ) )
-        currentStrengthInt += Strengthes::STRAIT_FLUSH;
-    else if ( hasCare( combo ) )
-        currentStrengthInt += Strengthes::CARE;
-    else if ( hasFullHouse( combo ) )
-        currentStrengthInt += Strengthes::FULL_HOUSE;
-    else if ( hasFlush( combo ) )
-        currentStrengthInt += Strengthes::FLUSH;
-    else if ( hasStrait( combo ) )
-        currentStrengthInt += Strengthes::STRAIT;
-    else if ( hasSet( combo ) )
-        currentStrengthInt += Strengthes::SET;
-    else if ( hasTwoPairs( combo ) )
-        currentStrengthInt += Strengthes::TWO_PAIRS;
-    else if ( hasPair( combo ) )
-        currentStrengthInt += Strengthes::PAIR;
+    auto hasStraitFlush = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 4;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto cardItPlus4 = std::next( cardItPlus3 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+            const auto cardPlus4   = *cardItPlus4;
 
-    if ( hasFlushDraw( combo ) )
-        currentStrengthInt += Strengthes::FD;
-    if ( hasStraitDraw( combo ) )
-        currentStrengthInt += Strengthes::SD;
-    if ( hasGutShot( combo ) )
-        currentStrengthInt += Strengthes::GUT_SHOT;
-    if ( hasTwoOC( board, hand ) )
-        currentStrengthInt += Strengthes::TWO_OC;
-    if ( hasOneOC( board, hand ) )
-        currentStrengthInt += Strengthes::ONE_OC;
+            if ( card.eqSuit( cardPlus1 ) && card.eqSuit( cardPlus2 ) &&
+                 card.eqSuit( cardPlus3 ) && card.eqSuit( cardPlus4 ) )
+                if ( ( card == CardTraits::prevValue( cardPlus1 ) &&
+                       cardPlus1 == CardTraits::prevValue( cardPlus2 ) &&
+                       cardPlus2 == CardTraits::prevValue( cardPlus3 ) &&
+                       cardPlus3 == CardTraits::prevValue( cardPlus4 ) ) ||
+                     ( card == CardTraits::prevValue( cardPlus1 ) &&
+                       cardPlus1 == CardTraits::prevValue( cardPlus2 ) &&
+                       cardPlus2 == CardTraits::prevValue( cardPlus3 ) &&
+                       card == CardTraits::nextValue( cardPlus4 ) ) ) {
+                    mSignificationCard.hi =
+                    cardPlus4 > Card( Value::v5, Suit::h ) ? cardPlus4 : cardPlus3;
 
-    currentStrength = static_cast< Strengthes >( currentStrengthInt );
-    return currentStrength;
-}
-
-static bool hasStraitFlush( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 4;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto cardItPlus4 = std::next( cardItPlus3 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
-        auto cardPlus4   = *cardItPlus4;
-
-        for ( int8_t i = 0; i < 4; ++i )
-            ++card;
-        for ( int8_t i = 0; i < 3; ++i )
-            ++cardPlus1;
-        for ( int8_t i = 0; i < 2; ++i )
-            ++cardPlus2;
-        for ( int8_t i = 0; i < 1; ++i )
-            ++cardPlus3;
-        if ( card == cardPlus1 && card == cardPlus2 &&
-             card == cardPlus3 && card == cardPlus4 )
-            return true;
-    }
-
-    return false;
-}
-
-static bool hasCare( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 3;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
-
-        if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) &&
-             card.eqValue( cardPlus3 ) )
-            return true;
-    }
-
-    return false;
-}
-
-static bool hasFullHouse( const Combo & combo ) {
-    auto tmpComboVec = combo.asSortedVector();
-    for ( auto cardIt = tmpComboVec.begin();
-          cardIt != tmpComboVec.end() - 2;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-
-        if ( card.eqValue( cardPlus1 ) &&
-             card.eqValue( cardPlus2 ) ) {
-            tmpComboVec.erase( cardIt, cardItPlus2 );
-            for ( auto cardIt = tmpComboVec.begin();
-                  cardIt != tmpComboVec.end() - 1;
-                  ++cardIt ) {
-                auto cardItPlus1 = std::next( cardIt );
-                auto card        = *cardIt;
-                auto cardPlus1   = *cardItPlus1;
-
-                if ( card.eqValue( cardPlus1 ) )
                     return true;
+                }
+        }
+
+        return false;
+    };
+
+    auto hasCare = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 3;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+
+            if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) &&
+                 card.eqValue( cardPlus3 ) ) {
+                mSignificationCard.hi = card;
+
+                return true;
             }
         }
-    }
 
-    return false;
-}
+        return false;
+    };
 
-static bool hasFlush( const Combo & combo ) {
-    auto tmpComboVec = combo.asSortedVector();
-    std::sort(
-    tmpComboVec.begin(),
-    tmpComboVec.end(),
-    []( Card f, Card l ) -> bool { return f.eqSuit( l ); } );
+    auto hasFullHouse = [ this, &combo ] {
+        auto tmpComboVec = combo.asSortedVector();
+        for ( auto cardIt = tmpComboVec.begin(); cardIt != tmpComboVec.end() - 2;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
 
-    for ( auto cardIt = tmpComboVec.begin();
-          cardIt != tmpComboVec.end() - 4;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto cardItPlus4 = std::next( cardItPlus3 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
-        auto cardPlus4   = *cardItPlus4;
+            if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) ) {
+                mSignificationCard.hi = card;
 
-        if ( card.eqSuit( cardPlus4 ) && card.eqSuit( cardPlus3 ) &&
-             card.eqSuit( cardPlus2 ) && card.eqSuit( cardPlus1 ) )
-            return true;
-    }
+                tmpComboVec.erase( cardIt, cardItPlus2 );
 
-    return false;
-}
+                for ( auto cardIt = tmpComboVec.begin();
+                      cardIt != tmpComboVec.end() - 1;
+                      ++cardIt ) {
+                    const auto cardItPlus1 = std::next( cardIt );
+                    const auto card        = *cardIt;
+                    const auto cardPlus1   = *cardItPlus1;
 
-static bool hasStrait( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 4;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto cardItPlus4 = std::next( cardItPlus3 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
-        auto cardPlus4   = *cardItPlus4;
+                    if ( card.eqValue( cardPlus1 ) ) {
+                        mSignificationCard.low = card;
 
-        for ( int8_t i = 0; i < 4; ++i )
-            ++card;
-        for ( int8_t i = 0; i < 3; ++i )
-            ++cardPlus1;
-        for ( int8_t i = 0; i < 2; ++i )
-            ++cardPlus2;
-        for ( int8_t i = 0; i < 1; ++i )
-            ++cardPlus3;
-        if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) &&
-             card.eqValue( cardPlus3 ) && card.eqValue( cardPlus4 ) )
-            return true;
-    }
+                        return true;
+                    }
+                }
 
-    return false;
-}
-
-static bool hasSet( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 2;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-
-        if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) )
-            return true;
-    }
-
-    return false;
-}
-
-static bool hasTwoPairs( const Combo & combo ) {
-    auto tmpComboVec = combo.asSortedVector();
-    for ( auto cardIt = tmpComboVec.begin();
-          cardIt != tmpComboVec.end() - 3;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-
-        if ( card.eqValue( cardPlus1 ) ) {
-            tmpComboVec.erase( cardIt, cardItPlus1 );
-            for ( auto cardIt = tmpComboVec.begin();
-                  cardIt != tmpComboVec.end() - 1;
-                  ++cardIt ) {
-                auto cardItPlus1 = std::next( cardIt );
-                auto card        = *cardIt;
-                auto cardPlus1   = *cardItPlus1;
-
-                if ( card.eqValue( cardPlus1 ) )
-                    return true;
+                return false;
             }
         }
+
+        return false;
+    };
+
+    auto hasFlush = [ this, &combo ] {
+        auto tmpComboVec = combo.asSortedVector();
+        std::sort( tmpComboVec.begin(),
+                   tmpComboVec.end(),
+                   []( Card f, Card l ) -> bool { return f.eqSuit( l ); } );
+
+        for ( auto cardIt = tmpComboVec.begin(); cardIt != tmpComboVec.end() - 4;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto cardItPlus4 = std::next( cardItPlus3 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+            const auto cardPlus4   = *cardItPlus4;
+
+            if ( card.eqSuit( cardPlus4 ) && card.eqSuit( cardPlus3 ) &&
+                 card.eqSuit( cardPlus2 ) && card.eqSuit( cardPlus1 ) ) {
+                mSignificationCard.hi = card;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasStrait = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 4;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto cardItPlus4 = std::next( cardItPlus3 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+            const auto cardPlus4   = *cardItPlus4;
+
+            if ( ( card.eqValue( CardTraits::prevValue( cardPlus1 ) ) &&
+                   cardPlus1.eqValue( CardTraits::prevValue( cardPlus2 ) ) &&
+                   cardPlus2.eqValue( CardTraits::prevValue( cardPlus3 ) ) &&
+                   cardPlus3.eqValue( CardTraits::prevValue( cardPlus4 ) ) ) ||
+                 ( card.eqValue( CardTraits::prevValue( cardPlus1 ) ) &&
+                   cardPlus1.eqValue( CardTraits::prevValue( cardPlus2 ) ) &&
+                   cardPlus2.eqValue( CardTraits::prevValue( cardPlus3 ) ) &&
+                   card.eqValue( CardTraits::nextValue( cardPlus4 ) ) ) ) {
+                mSignificationCard.hi =
+                cardPlus4 > Card( Value::v5, Suit::h ) ? cardPlus4 : cardPlus3;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasSet = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 2;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+
+            if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) ) {
+                mSignificationCard.hi = card;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasTwoPairs = [ this, &combo ] {
+        auto tmpComboVec = combo.asSortedVector();
+        for ( auto cardIt = tmpComboVec.begin(); cardIt != tmpComboVec.end() - 3;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+
+            if ( card.eqValue( cardPlus1 ) ) {
+                mSignificationCard.low = card;
+
+                tmpComboVec.erase( cardIt, cardItPlus1 );
+
+                for ( auto cardIt = tmpComboVec.begin();
+                      cardIt != tmpComboVec.end() - 1;
+                      ++cardIt ) {
+                    const auto cardItPlus1 = std::next( cardIt );
+                    const auto card        = *cardIt;
+                    const auto cardPlus1   = *cardItPlus1;
+
+                    if ( card.eqValue( cardPlus1 ) ) {
+                        mSignificationCard.hi = card;
+
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasPair = [ this, &combo ] {
+        const auto tmpComboVec = combo.asSortedVector();
+        for ( auto cardIt = tmpComboVec.begin(); cardIt != tmpComboVec.end() - 1;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+
+            if ( card.eqValue( cardPlus1 ) ) {
+                mSignificationCard.hi = card;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasFlushDraw = [ this, &combo ] {
+        auto tmpComboVec = combo.asSortedVector();
+        std::sort( tmpComboVec.begin(),
+                   tmpComboVec.end(),
+                   []( Card f, Card l ) -> bool { return f.eqSuit( l ); } );
+
+        for ( auto cardIt = tmpComboVec.begin(); cardIt != tmpComboVec.end() - 3;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+
+            if ( card.eqSuit( cardPlus3 ) && card.eqSuit( cardPlus2 ) &&
+                 card.eqSuit( cardPlus1 ) ) {
+                mSignificationCard.hi = *cardIt;
+                ++cardIt;
+
+                for ( ; cardIt != std::next( cardItPlus3 ); ++cardIt )
+                    if ( *cardIt > mSignificationCard.hi )
+                        mSignificationCard.hi = *cardIt;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasStraitDraw = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 3;
+              ++cardIt ) {
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+
+            if ( card.eqValue( CardTraits::prevValue( cardPlus1 ) ) &&
+                 cardPlus1.eqValue( CardTraits::prevValue( cardPlus2 ) ) &&
+                 cardPlus2.eqValue( CardTraits::prevValue( cardPlus3 ) ) &&
+                 !cardPlus3.eqValue( Card( Value::vA, Suit::h ) ) ) {
+                mSignificationCard.hi = cardPlus3;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasGutShot = [ this, &combo ] {
+        for ( auto cardIt = combo.asSortedVector().begin();
+              cardIt != combo.asSortedVector().end() - 3;
+              ++cardIt ) {
+            /*
+			 *GutShot is a draw combo that can turn into a strait with one out.
+			 *
+			 * A 2 3 4  or J Q K A
+			 * [1] [2] [3] [ ] [5] or
+			 * [1] [2] [ ] [4] [5] or
+			 * [1] [ ] [3] [4] [5] or
+			 *
+			 */
+
+            const auto cardItPlus1 = std::next( cardIt );
+            const auto cardItPlus2 = std::next( cardItPlus1 );
+            const auto cardItPlus3 = std::next( cardItPlus2 );
+            const auto card        = *cardIt;
+            const auto cardPlus1   = *cardItPlus1;
+            const auto cardPlus2   = *cardItPlus2;
+            const auto cardPlus3   = *cardItPlus3;
+
+            if ( card.getValue() == Value::vJ && cardPlus1.getValue() == Value::vQ &&
+                 cardPlus2.getValue() == Value::vK &&
+                 cardPlus3.getValue() == Value::vA ) {
+                mSignificationCard.hi  = cardPlus3;
+                mSignificationCard.low = card;
+
+                return true;
+            }
+
+            else if ( card.getValue() == Value::v2 &&
+                      cardPlus1.getValue() == Value::v3 &&
+                      cardPlus2.getValue() == Value::v4 &&
+                      std::prev( combo.asSortedVector().end() )->getValue() ==
+                      Value::vA ) {
+                mSignificationCard.hi  = cardPlus2;
+                mSignificationCard.low = *std::prev( combo.asSortedVector().end() );
+
+                return true;
+            }
+
+            else if ( ( CardTraits::nextValue( card ).eqValue( cardPlus1 ) &&
+                        CardTraits::nextValue( cardPlus1 ).eqValue( cardPlus2 ) &&
+                        CardTraits::nextValue( CardTraits::nextValue( cardPlus2 ) )
+                        .eqValue( cardPlus3 ) ) ||
+
+                      ( CardTraits::nextValue( card ).eqValue( cardPlus1 ) &&
+                        CardTraits::nextValue( CardTraits::nextValue( cardPlus1 ) )
+                        .eqValue( cardPlus2 ) &&
+                        CardTraits::nextValue( cardPlus2 ).eqValue( cardPlus3 ) ) ||
+
+                      ( CardTraits::nextValue( CardTraits::nextValue( card ) )
+                        .eqValue( cardPlus1 ) &&
+                        CardTraits::nextValue( cardPlus1 ).eqValue( cardPlus2 ) &&
+                        CardTraits::nextValue( cardPlus2 ).eqValue( cardPlus3 ) )
+
+            ) {
+                mSignificationCard.hi  = cardPlus3;
+                mSignificationCard.low = card;
+
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    auto hasTwoOC = [ this, &board, &hand ] {
+        for ( const auto card : board.getBoard() )
+            if ( !( hand.low() > card ) )
+                return false;
+
+        mSignificationCard.hi  = hand.hight();
+        mSignificationCard.low = hand.low();
+
+        return true;
+    };
+
+    auto hasOneOC = [ this, &board, &hand ] {
+        auto tmpCardVec = board.getBoard();
+        for ( const auto card : tmpCardVec )
+            if ( !( hand.hight() > card ) )
+                return false;
+
+        mSignificationCard.hi = hand.hight();
+
+        std::sort( tmpCardVec.begin(), tmpCardVec.end() );
+
+        for ( const auto card : tmpCardVec )
+            if ( hand.low() < card ) {
+                mSignificationCard.low = card;
+                break;
+            }
+
+        return true;
+    };
+
+    if ( hasStraitFlush() )
+        currentStrengthInt = to_underlying( Strengthes::STRAIT_FLUSH );
+    else if ( hasCare() )
+        currentStrengthInt = to_underlying( Strengthes::CARE );
+    else if ( hasFullHouse() )
+        currentStrengthInt = to_underlying( Strengthes::FULL_HOUSE );
+    else if ( hasFlush() )
+        currentStrengthInt = to_underlying( Strengthes::FLUSH );
+    else if ( hasStrait() )
+        currentStrengthInt = to_underlying( Strengthes::STRAIT );
+    else if ( hasSet() )
+        currentStrengthInt = to_underlying( Strengthes::SET );
+    else if ( hasTwoPairs() )
+        currentStrengthInt = to_underlying( Strengthes::TWO_PAIRS );
+    else if ( hasPair() )
+        currentStrengthInt = to_underlying( Strengthes::PAIR );
+    else
+        currentStrengthInt = to_underlying( Strengthes::HI );
+
+    if ( board.getStreet() == Board::State::FLOP ||
+         board.getStreet() == Board::State::TURN ) {
+        if ( hasFlushDraw() )
+            currentStrengthInt |= to_underlying( Strengthes::FD );
+        if ( hasStraitDraw() )
+            currentStrengthInt |= to_underlying( Strengthes::SD );
+        if ( hasGutShot() )
+            currentStrengthInt |= to_underlying( Strengthes::GUT_SHOT );
+        if ( hasTwoOC() )
+            currentStrengthInt |= to_underlying( Strengthes::TWO_OC );
+        if ( hasOneOC() )
+            currentStrengthInt |= to_underlying( Strengthes::ONE_OC );
     }
 
-    return false;
+    mCurrentStrength = static_cast< Strengthes >( currentStrengthInt );
+
+    return getStrength();
 }
 
-static bool hasPair( const Combo & combo ) {
-    auto tmpComboVec = combo.asSortedVector();
-    for ( auto cardIt = tmpComboVec.begin();
-          cardIt != tmpComboVec.end() - 1;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
+std::string Strength::asStr() const { return to_string( mCurrentStrength ); }
 
-        if ( card.eqValue( cardPlus1 ) )
-            return true;
-    }
+std::string to_string( Strength::Strengthes handStrength ) {
+    std::string result;
 
-    return false;
-}
+    if ( to_underlying( handStrength ) &
+         to_underlying( Strength::Strengthes::STRAIT_FLUSH ) )
+        result += "STRAIT_FLUSH ";
 
-static bool hasFlushDraw( const Combo & combo ) {
-    auto tmpComboVec = combo.asSortedVector();
-    std::sort(
-    tmpComboVec.begin(),
-    tmpComboVec.end(),
-    []( Card f, Card l ) -> bool { return f.eqSuit( l ); } );
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::CARE ) )
+        result += "CARE ";
 
-    for ( auto cardIt = tmpComboVec.begin();
-          cardIt != tmpComboVec.end() - 3;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::FULL_HOUSE ) )
+        result += "FULL_HOUSE ";
 
-        if ( card.eqSuit( cardPlus3 ) && card.eqSuit( cardPlus2 ) &&
-             card.eqSuit( cardPlus1 ) )
-            return true;
-    }
-    return false;
-}
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::FLUSH ) )
+        result += "FLUSH ";
 
-static bool hasStraitDraw( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 3;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::STRAIT ) )
+        result += "STRAIT ";
 
-        for ( int8_t i = 0; i < 3; ++i )
-            ++card;
-        for ( int8_t i = 0; i < 2; ++i )
-            ++cardPlus1;
-        for ( int8_t i = 0; i < 1; ++i )
-            ++cardPlus2;
-        if ( card.eqValue( cardPlus1 ) && card.eqValue( cardPlus2 ) &&
-             card.eqValue( cardPlus3 ) )
-            return true;
-    }
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::SET ) )
+        result += "SET ";
 
-    return false;
-}
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::TWO_PAIRS ) )
+        result += "TWO_PAIRS ";
 
-static bool hasGutShot( const Combo & combo ) {
-    for ( auto cardIt = combo.asSortedVector().begin();
-          cardIt != combo.asSortedVector().end() - 3;
-          ++cardIt ) {
-        auto cardItPlus1 = std::next( cardIt );
-        auto cardItPlus2 = std::next( cardItPlus1 );
-        auto cardItPlus3 = std::next( cardItPlus2 );
-        auto card        = *cardIt;
-        auto cardPlus1   = *cardItPlus1;
-        auto cardPlus2   = *cardItPlus2;
-        auto cardPlus3   = *cardItPlus3;
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::PAIR ) )
+        result += "PAIR ";
 
-        for ( int8_t i = 0; i < 3; ++i )
-            ++card;
-        for ( int8_t i = 0; i < 2; ++i )
-            ++cardPlus1;
-        for ( int8_t i = 0; i < 1; ++i )
-            ++cardPlus2;
-        if ( ( card.eqValue( cardPlus1 ) &&
-               card.eqValue( cardPlus2 ) &&
-               card.eqValue( ++Card { cardPlus3 } ) ) ||
+    else if ( to_underlying( handStrength ) &
+              to_underlying( Strength::Strengthes::HI ) )
+        result += "HI ";
 
-             ( card.eqValue( cardPlus1 ) &&
-               card.eqValue( ++Card { cardPlus2 } ) &&
-               card.eqValue( ++Card { cardPlus3 } ) ) ||
+    if ( to_underlying( handStrength ) &
+         to_underlying( Strength::Strengthes::ONE_OC ) )
+        result += "ONE_OC ";
 
-             ( card.eqValue( ++Card { cardPlus1 } ) &&
-               card.eqValue( ++Card { cardPlus2 } ) &&
-               card.eqValue( ++Card { cardPlus3 } ) )
+    if ( to_underlying( handStrength ) &
+         to_underlying( Strength::Strengthes::TWO_OC ) )
+        result += "TWO_OC ";
 
-        )
-            return true;
-    }
-    return false;
-}
+    if ( to_underlying( handStrength ) & to_underlying( Strength::Strengthes::FD ) )
+        result += "FD ";
 
-static bool hasTwoOC( const Board & board, const Hand & hand ) {
-    for ( auto card : board.getBoard() )
-        if ( !( hand.low() > card ) )
-            return false;
+    if ( to_underlying( handStrength ) & to_underlying( Strength::Strengthes::SD ) )
+        result += "SD ";
 
-    return true;
-}
+    if ( to_underlying( handStrength ) &
+         to_underlying( Strength::Strengthes::GUT_SHOT ) )
+        result += "GUT_SHOT ";
 
-static bool hasOneOC( const Board & board, const Hand & hand ) {
-    for ( auto card : board.getBoard() )
-        if ( !( hand.hight() > card ) )
-            return false;
-
-    return true;
+    return std::format( "[ {}]", result );
 }
 }   // namespace core::engine

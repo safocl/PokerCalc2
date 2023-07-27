@@ -1,33 +1,59 @@
+/**
+ *\file equity.hpp
+ *\copyright GPL-3.0-or-later
+ *\author safocl (megaSafocl)
+ *\date 2023
+ *
+ * \detail \"Copyright safocl (megaSafocl) 2023\"
+ This file is part of PokerCalc2.
+
+ PokerCalc2 is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation, either version 3 of the License, or any later version.
+
+ PokerCalc2 is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along with
+ PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "equity.hpp"
 #include "combo.hpp"
+#include "range.hpp"
 #include "strength.hpp"
+
+#include <format>
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <vector>
 
 namespace core::engine {
 
-static Equity::Eq calcPreflop( Board board [[maybe_unused]],
-                               Hand  hero [[maybe_unused]],
-                               Hand  opp [[maybe_unused]] ) {
+namespace {
+
+Equity::Eq calcPreflop( Board board [[maybe_unused]],
+                        Hand  hero [[maybe_unused]],
+                        Hand  opp [[maybe_unused]] ) {
     return Equity::Eq { 1.0, 1.0, 1.0 };
 }
 
-static Equity::Eq calcFlop( Board board [[maybe_unused]],
-                            Hand  hero [[maybe_unused]],
-                            Hand  opp [[maybe_unused]] ) {
+Equity::Eq calcFlop( Board board [[maybe_unused]],
+                     Hand  hero [[maybe_unused]],
+                     Hand  opp [[maybe_unused]] ) {
     return Equity::Eq { 1.0, 1.0, 1.0 };
 }
 
-static Equity::Eq calcTurn( Board board [[maybe_unused]],
-                            Hand  hero [[maybe_unused]],
-                            Hand  opp [[maybe_unused]] ) {
+Equity::Eq calcTurn( Board board [[maybe_unused]],
+                     Hand  hero [[maybe_unused]],
+                     Hand  opp [[maybe_unused]] ) {
     return Equity::Eq { 1.0, 1.0, 1.0 };
 }
 
-static Equity::Eq calcRiver( Board board [[maybe_unused]],
-                             Hand  hero [[maybe_unused]],
-                             Hand  opp [[maybe_unused]] ) {
+Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
     Strength heroStrength;
     heroStrength.calc( board, hero );
 
@@ -37,882 +63,417 @@ static Equity::Eq calcRiver( Board board [[maybe_unused]],
     Equity::Eq eq {};
 
     auto sameStraitFlushEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        for ( auto heroIt = heroCombo.asSortedVector().rbegin();
-              heroIt != heroCombo.asSortedVector().rend() - 4;
-              ++heroIt ) {
-            auto heroItPlus1 = std::next( heroIt );
-            auto heroItPlus2 = std::next( heroItPlus1 );
-            auto heroItPlus3 = std::next( heroItPlus2 );
-            auto heroItPlus4 = std::next( heroItPlus3 );
-
-            auto heroCard      = *heroIt;
-            auto heroCardPlus1 = *heroItPlus1;
-            auto heroCardPlus2 = *heroItPlus2;
-            auto heroCardPlus3 = *heroItPlus3;
-            auto heroCardPlus4 = *heroItPlus4;
-
-            for ( int i = 0; i < 4; ++i )
-                ++heroCardPlus4;
-            for ( int i = 0; i < 3; ++i )
-                ++heroCardPlus3;
-            for ( int i = 0; i < 2; ++i )
-                ++heroCardPlus2;
-            ++heroCardPlus1;
-
-            if ( heroCard == heroCardPlus1 &&
-                 heroCard == heroCardPlus2 &&
-                 heroCard == heroCardPlus3 &&
-                 heroCard == heroCardPlus4 )
-                heroHiCard = heroCard;
-        }
-
-        Card oppHiCard;
-        for ( auto oppIt = oppCombo.asSortedVector().rbegin();
-              oppIt != heroCombo.asSortedVector().rend() - 4;
-              ++oppIt ) {
-            auto oppItPlus1 = std::next( oppIt );
-            auto oppItPlus2 = std::next( oppItPlus1 );
-            auto oppItPlus3 = std::next( oppItPlus2 );
-            auto oppItPlus4 = std::next( oppItPlus3 );
-
-            auto oppCard      = *oppIt;
-            auto oppCardPlus1 = *oppItPlus1;
-            auto oppCardPlus2 = *oppItPlus2;
-            auto oppCardPlus3 = *oppItPlus3;
-            auto oppCardPlus4 = *oppItPlus4;
-
-            for ( int i = 0; i < 4; ++i )
-                ++oppCardPlus4;
-            for ( int i = 0; i < 3; ++i )
-                ++oppCardPlus3;
-            for ( int i = 0; i < 2; ++i )
-                ++oppCardPlus2;
-            ++oppCardPlus1;
-
-            if ( oppCard == oppCardPlus1 && oppCard == oppCardPlus2 &&
-                 oppCard == oppCardPlus3 && oppCard == oppCardPlus4 )
-                oppHiCard = oppCard;
-        }
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
+
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameCareEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        for ( auto heroIt = heroCombo.asSortedVector().rbegin();
-              heroIt != heroCombo.asSortedVector().rend() - 3;
-              ++heroIt ) {
-            auto heroItPlus1 = std::next( heroIt );
-            auto heroItPlus2 = std::next( heroItPlus1 );
-            auto heroItPlus3 = std::next( heroItPlus2 );
-
-            auto heroCard      = *heroIt;
-            auto heroCardPlus1 = *heroItPlus1;
-            auto heroCardPlus2 = *heroItPlus2;
-            auto heroCardPlus3 = *heroItPlus3;
-
-            if ( heroCard.eqValue( heroCardPlus1 ) &&
-                 heroCard.eqValue( heroCardPlus2 ) &&
-                 heroCard.eqValue( heroCardPlus3 ) )
-                heroHiCard = heroCard;
-        }
-
-        Card oppHiCard;
-        for ( auto oppIt = oppCombo.asSortedVector().rbegin();
-              oppIt != heroCombo.asSortedVector().rend() - 4;
-              ++oppIt ) {
-            auto oppItPlus1 = std::next( oppIt );
-            auto oppItPlus2 = std::next( oppItPlus1 );
-            auto oppItPlus3 = std::next( oppItPlus2 );
-
-            auto oppCard      = *oppIt;
-            auto oppCardPlus1 = *oppItPlus1;
-            auto oppCardPlus2 = *oppItPlus2;
-            auto oppCardPlus3 = *oppItPlus3;
-
-            if ( oppCard.eqValue( oppCardPlus1 ) &&
-                 oppCard.eqValue( oppCardPlus2 ) &&
-                 oppCard.eqValue( oppCardPlus3 ) )
-                oppHiCard = oppCard;
-        }
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
+
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameFullHouseEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        Card heroLowCard;
-        for ( auto It = heroCombo.asSortedVector().rbegin();
-              It != heroCombo.asSortedVector().rend() - 2;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-            auto cardPlus2 = *ItPlus2;
-
-            if ( card.eqValue( cardPlus1 ) &&
-                 card.eqValue( cardPlus2 ) ) {
-                heroHiCard = card;
-                std::vector< Card > clippedCombo {
-                    heroCombo.asSortedVector()
-                };
-
-                clippedCombo.erase( It.base(), ItPlus2.base() );
-
-                for ( auto It = clippedCombo.rbegin();
-                      It != clippedCombo.rend() - 1;
-                      ++It ) {
-                    auto ItPlus1 = std::next( It );
-
-                    auto card      = *It;
-                    auto cardPlus1 = *ItPlus1;
-
-                    if ( card.eqValue( cardPlus1 ) )
-                        heroLowCard = card;
-                }
-            }
-        }
-
-        Card oppHiCard;
-        Card oppLowCard;
-        for ( auto It = oppCombo.asSortedVector().rbegin();
-              It != oppCombo.asSortedVector().rend() - 2;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-            auto cardPlus2 = *ItPlus2;
-
-            if ( card.eqValue( cardPlus1 ) &&
-                 card.eqValue( cardPlus2 ) ) {
-                oppHiCard = card;
-                std::vector< Card > clippedCombo {
-                    oppCombo.asSortedVector()
-                };
-
-                clippedCombo.erase( It.base(), ItPlus2.base() );
-
-                for ( auto It = clippedCombo.rbegin();
-                      It != clippedCombo.rend() - 1;
-                      ++It ) {
-                    auto ItPlus1 = std::next( It );
-
-                    auto card      = *It;
-                    auto cardPlus1 = *ItPlus1;
-
-                    if ( card.eqValue( cardPlus1 ) )
-                        oppLowCard = card;
-                }
-            }
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
-        else if ( heroLowCard > oppLowCard )
+        else if ( heroStrength.getStrength().significationCard.low >
+                  oppStrength.getStrength().significationCard.low )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroLowCard < oppLowCard )
+        else if ( heroStrength.getStrength().significationCard.low <
+                  oppStrength.getStrength().significationCard.low )
             return Equity::Eq { 0, 1, 0 };
 
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameFlushEq = [ & ]() {
-        std::vector< Card > heroCombo {
-            Combo { board, hero }.asSortedVector()
-        };
-        std::vector< Card > oppCombo {
-            Combo { board, opp }.asSortedVector()
-        };
-
-        std::sort( heroCombo.begin(),
-                   heroCombo.end(),
-                   []( Card h, Card o ) { return h.eqSuit( o ); } );
-
-        std::sort( oppCombo.begin(),
-                   oppCombo.end(),
-                   []( Card h, Card o ) { return h.eqSuit( o ); } );
-
-        Card heroHiCard;
-        for ( auto It = heroCombo.rbegin();
-              It != heroCombo.rend() - 4;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-            auto ItPlus3 = std::next( ItPlus2 );
-            auto ItPlus4 = std::next( ItPlus3 );
-
-            auto Card      = *It;
-            auto CardPlus1 = *ItPlus1;
-            auto CardPlus2 = *ItPlus2;
-            auto CardPlus3 = *ItPlus3;
-            auto CardPlus4 = *ItPlus4;
-
-            if ( Card.eqSuit( CardPlus1 ) &&
-                 Card.eqSuit( CardPlus2 ) &&
-                 Card.eqSuit( CardPlus3 ) &&
-                 Card.eqSuit( CardPlus4 ) )
-                heroHiCard = Card;
-        }
-
-        Card oppHiCard;
-        for ( auto It = oppCombo.rbegin(); It != oppCombo.rend() - 4;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-            auto ItPlus3 = std::next( ItPlus2 );
-            auto ItPlus4 = std::next( ItPlus3 );
-
-            auto Card      = *It;
-            auto CardPlus1 = *ItPlus1;
-            auto CardPlus2 = *ItPlus2;
-            auto CardPlus3 = *ItPlus3;
-            auto CardPlus4 = *ItPlus4;
-
-            if ( Card.eqSuit( CardPlus1 ) &&
-                 Card.eqSuit( CardPlus2 ) &&
-                 Card.eqSuit( CardPlus3 ) &&
-                 Card.eqSuit( CardPlus4 ) )
-                oppHiCard = Card;
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
+
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameStraitEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, hero };
-
-        Card heroHiCard;
-        for ( auto It = heroCombo.asSortedVector().rbegin();
-              It != heroCombo.asSortedVector().rend() - 4;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-            auto ItPlus3 = std::next( ItPlus2 );
-            auto ItPlus4 = std::next( ItPlus3 );
-
-            auto Card      = *It;
-            auto CardPlus1 = *ItPlus1;
-            auto CardPlus2 = *ItPlus2;
-            auto CardPlus3 = *ItPlus3;
-            auto CardPlus4 = *ItPlus4;
-
-            ++CardPlus1;
-            for ( int i = 0; i < 2; ++i )
-                ++CardPlus2;
-            for ( int i = 0; i < 3; ++i )
-                ++CardPlus3;
-            for ( int i = 0; i < 4; ++i )
-                ++CardPlus4;
-
-            if ( Card.eqValue( CardPlus1 ) &&
-                 Card.eqValue( CardPlus2 ) &&
-                 Card.eqValue( CardPlus3 ) &&
-                 Card.eqValue( CardPlus4 ) )
-                heroHiCard = Card;
-        }
-
-        Card oppHiCard;
-        for ( auto It = oppCombo.asSortedVector().rbegin();
-              It != oppCombo.asSortedVector().rend() - 4;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-            auto ItPlus2 = std::next( ItPlus1 );
-            auto ItPlus3 = std::next( ItPlus2 );
-            auto ItPlus4 = std::next( ItPlus3 );
-
-            auto Card      = *It;
-            auto CardPlus1 = *ItPlus1;
-            auto CardPlus2 = *ItPlus2;
-            auto CardPlus3 = *ItPlus3;
-            auto CardPlus4 = *ItPlus4;
-
-            ++CardPlus1;
-            for ( int i = 0; i < 2; ++i )
-                ++CardPlus2;
-            for ( int i = 0; i < 3; ++i )
-                ++CardPlus3;
-            for ( int i = 0; i < 4; ++i )
-                ++CardPlus4;
-
-            if ( Card.eqValue( CardPlus1 ) &&
-                 Card.eqValue( CardPlus2 ) &&
-                 Card.eqValue( CardPlus3 ) &&
-                 Card.eqValue( CardPlus4 ) )
-                oppHiCard = Card;
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
+
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameSetEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        for ( auto heroIt = heroCombo.asSortedVector().rbegin();
-              heroIt != heroCombo.asSortedVector().rend() - 2;
-              ++heroIt ) {
-            auto heroItPlus1 = std::next( heroIt );
-            auto heroItPlus2 = std::next( heroItPlus1 );
-
-            auto heroCard      = *heroIt;
-            auto heroCardPlus1 = *heroItPlus1;
-            auto heroCardPlus2 = *heroItPlus2;
-
-            if ( heroCard.eqValue( heroCardPlus1 ) &&
-                 heroCard.eqValue( heroCardPlus2 ) )
-                heroHiCard = heroCard;
-        }
-
-        Card oppHiCard;
-        for ( auto oppIt = oppCombo.asSortedVector().rbegin();
-              oppIt != oppCombo.asSortedVector().rend() - 2;
-              ++oppIt ) {
-            auto oppItPlus1 = std::next( oppIt );
-            auto oppItPlus2 = std::next( oppItPlus1 );
-
-            auto oppCard      = *oppIt;
-            auto oppCardPlus1 = *oppItPlus1;
-            auto oppCardPlus2 = *oppItPlus2;
-
-            if ( oppCard.eqValue( oppCardPlus1 ) &&
-                 oppCard.eqValue( oppCardPlus2 ) )
-                oppHiCard = oppCard;
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
 
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto sameTwoPairsEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        Card heroLowCard;
-        for ( auto It = heroCombo.asSortedVector().rbegin();
-              It != heroCombo.asSortedVector().rend() - 1;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-
-            if ( card.eqValue( cardPlus1 ) ) {
-                heroHiCard = card;
-                std::vector< Card > clippedCombo {
-                    heroCombo.asSortedVector()
-                };
-
-                clippedCombo.erase( It.base(), ItPlus1.base() );
-
-                for ( auto It = clippedCombo.rbegin();
-                      It != clippedCombo.rend() - 1;
-                      ++It ) {
-                    auto ItPlus1 = std::next( It );
-
-                    auto card      = *It;
-                    auto cardPlus1 = *ItPlus1;
-
-                    if ( card.eqValue( cardPlus1 ) )
-                        heroLowCard = card;
-                }
-            }
-        }
-
-        Card oppHiCard;
-        Card oppLowCard;
-        for ( auto It = oppCombo.asSortedVector().rbegin();
-              It != oppCombo.asSortedVector().rend() - 2;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-
-            if ( card.eqValue( cardPlus1 ) ) {
-                oppHiCard = card;
-                std::vector< Card > clippedCombo {
-                    oppCombo.asSortedVector()
-                };
-
-                clippedCombo.erase( It.base(), ItPlus1.base() );
-
-                for ( auto It = clippedCombo.rbegin();
-                      It != clippedCombo.rend() - 1;
-                      ++It ) {
-                    auto ItPlus1 = std::next( It );
-
-                    auto card      = *It;
-                    auto cardPlus1 = *ItPlus1;
-
-                    if ( card.eqValue( cardPlus1 ) )
-                        oppLowCard = card;
-                }
-            }
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
-        else if ( heroLowCard > oppLowCard )
+        else if ( heroStrength.getStrength().significationCard.low >
+                  oppStrength.getStrength().significationCard.low )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroLowCard < oppLowCard )
+        else if ( heroStrength.getStrength().significationCard.low <
+                  oppStrength.getStrength().significationCard.low )
             return Equity::Eq { 0, 1, 0 };
 
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
     auto samePairEq = [ & ]() {
-        Combo heroCombo { board, hero };
-        Combo oppCombo { board, opp };
-
-        Card heroHiCard;
-        for ( auto It = heroCombo.asSortedVector().rbegin();
-              It != heroCombo.asSortedVector().rend() - 1;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-
-            if ( card.eqValue( cardPlus1 ) )
-                heroHiCard = card;
-        }
-
-        Card oppHiCard;
-        for ( auto It = oppCombo.asSortedVector().rbegin();
-              It != oppCombo.asSortedVector().rend() - 2;
-              ++It ) {
-            auto ItPlus1 = std::next( It );
-
-            auto card      = *It;
-            auto cardPlus1 = *ItPlus1;
-
-            if ( card.eqValue( cardPlus1 ) )
-                oppHiCard = card;
-        }
-
-        if ( heroHiCard > oppHiCard )
+        if ( heroStrength.getStrength().significationCard.hi >
+             oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 1, 0, 0 };
-        else if ( heroHiCard < oppHiCard )
+        else if ( heroStrength.getStrength().significationCard.hi <
+                  oppStrength.getStrength().significationCard.hi )
             return Equity::Eq { 0, 1, 0 };
 
         return Equity::Eq { 0.5, 0.5, 1 };
     };
 
-    switch ( heroStrength.getStrength() ) {
-    case Strength::STRAIT_FLUSH: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    auto const heroStrengthVal = heroStrength.getStrength().value;
+    auto const oppStrengthVal  = oppStrength.getStrength().value;
+
+    if ( heroStrengthVal & Strength::STRAIT_FLUSH ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH )
             eq = sameStraitFlushEq();
-            break;
-        }
-        default: {
+        else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::CARE: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::CARE ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
+        } else if ( oppStrengthVal & Strength::CARE ) {
             eq = sameCareEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::FULL_HOUSE: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::FULL_HOUSE ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
+        } else if ( oppStrengthVal & Strength::FULL_HOUSE ) {
             eq = sameFullHouseEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::FLUSH: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::FLUSH ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ||
+             oppStrengthVal & Strength::FULL_HOUSE ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FLUSH: {
+        } else if ( oppStrengthVal & Strength::FLUSH ) {
             eq = sameFlushEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::STRAIT: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::STRAIT ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ||
+             oppStrengthVal & Strength::FULL_HOUSE ||
+             oppStrengthVal & Strength::FLUSH ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FLUSH: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::STRAIT: {
+        } else if ( oppStrengthVal & Strength::STRAIT ) {
             eq = sameStraitEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::SET: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::SET ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ||
+             oppStrengthVal & Strength::FULL_HOUSE ||
+             oppStrengthVal & Strength::FLUSH ||
+             oppStrengthVal & Strength::STRAIT ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FLUSH: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::STRAIT: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::SET: {
+        } else if ( oppStrengthVal & Strength::SET ) {
             eq = sameSetEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::TWO_PAIRS: {
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
+    else if ( heroStrengthVal & Strength::TWO_PAIRS ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ||
+             oppStrengthVal & Strength::FULL_HOUSE ||
+             oppStrengthVal & Strength::FLUSH || oppStrengthVal & Strength::STRAIT ||
+             oppStrengthVal & Strength::SET ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::CARE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::FLUSH: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::STRAIT: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::SET: {
-            eq.hero = 0.0;
-            eq.opp  = 1.0;
-            eq.tie  = 0.0;
-            break;
-        }
-
-        case Strength::TWO_PAIRS: {
+        } else if ( oppStrengthVal & Strength::TWO_PAIRS ) {
             eq = sameTwoPairsEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    case Strength::PAIR: {
-        eq.hero = 0.0;
-        eq.opp  = 1.0;
-        eq.tie  = 0.0;
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
-            break;
-        }
-
-        case Strength::CARE: {
-            break;
-        }
-
-        case Strength::FULL_HOUSE: {
-            break;
-        }
-
-        case Strength::FLUSH: {
-            break;
-        }
-
-        case Strength::STRAIT: {
-            break;
-        }
-
-        case Strength::SET: {
-            break;
-        }
-
-        case Strength::PAIR: {
+    else if ( heroStrengthVal & Strength::PAIR ) {
+        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
+             oppStrengthVal & Strength::CARE ||
+             oppStrengthVal & Strength::FULL_HOUSE ||
+             oppStrengthVal & Strength::FLUSH || oppStrengthVal & Strength::STRAIT ||
+             oppStrengthVal & Strength::SET ||
+             oppStrengthVal & Strength::TWO_PAIRS ) {
+            eq.hero = 0.0;
+            eq.opp  = 1.0;
+            eq.tie  = 0.0;
+        } else if ( oppStrengthVal & Strength::PAIR ) {
             eq = samePairEq();
-            break;
-        }
-
-        default: {
+        } else {
             eq.hero = 1.0;
             eq.opp  = 0.0;
             eq.tie  = 0.0;
         }
-        }
-        break;
     }
 
-    default: {
-        eq.hero = 0.0;
-        eq.opp  = 1.0;
-        eq.tie  = 0.0;
-        switch ( oppStrength.getStrength() ) {
-        case Strength::STRAIT_FLUSH: {
-            break;
+    else {
+        Combo heroCombo { board, hero };
+        Combo oppCombo { board, opp };
+
+        if ( heroCombo.asSortedVector().back() > oppCombo.asSortedVector().back() ) {
+            eq.hero = 1.0;
+            eq.opp  = 0.0;
+            eq.tie  = 0.0;
         }
 
-        case Strength::CARE: {
-            break;
+        else if ( heroCombo.asSortedVector().back() <
+                  oppCombo.asSortedVector().back() ) {
+            eq.hero = 0.0;
+            eq.opp  = 1.0;
+            eq.tie  = 0.0;
         }
 
-        case Strength::FULL_HOUSE: {
-            break;
+        else {
+            eq.hero = 1.0;
+            eq.opp  = 1.0;
+            eq.tie  = 1.0;
         }
-
-        case Strength::FLUSH: {
-            break;
-        }
-
-        case Strength::STRAIT: {
-            break;
-        }
-
-        case Strength::SET: {
-            break;
-        }
-
-        case Strength::PAIR: {
-            break;
-        }
-
-        default: {
-            Combo heroCombo { board, hero };
-            Combo oppCombo { board, opp };
-
-            if ( heroCombo.asSortedVector().back() >
-                 oppCombo.asSortedVector().back() ) {
-                eq.hero = 1.0;
-                eq.opp  = 0.0;
-                eq.tie  = 0.0;
-            }
-
-            else if ( heroCombo.asSortedVector().back() <
-                      oppCombo.asSortedVector().back() ) {
-                eq.hero = 0.0;
-                eq.opp  = 1.0;
-                eq.tie  = 0.0;
-            }
-
-            else {
-                eq.hero = 1.0;
-                eq.opp  = 1.0;
-                eq.tie  = 1.0;
-            }
-        }
-        }
-    }
     }
 
     return eq;
-}   // namespace core::engine
+}
+}   // namespace
 
-void Equity::calculate( Board board, Hand hero, Hand opp ) {
-    if ( board.getStreet() == Board::State::PREFLOP )
-        eq = calcPreflop( board, hero, opp );
-    if ( board.getStreet() == Board::State::FLOP )
-        eq = calcFlop( board, hero, opp );
-    if ( board.getStreet() == Board::State::TURN )
-        eq = calcTurn( board, hero, opp );
-    if ( board.getStreet() == Board::State::RIVER )
-        eq = calcRiver( board, hero, opp );
+void Equity::calculate( const Hand & hero, const Hand & opp, const Board & board ) {
+    switch ( board.getStreet() ) {
+    case Board::State::PREFLOP: eq = calcPreflop( board, hero, opp ); break;
+    case Board::State::FLOP: eq = calcFlop( board, hero, opp ); break;
+    case Board::State::TURN: eq = calcTurn( board, hero, opp ); break;
+    case Board::State::RIVER: eq = calcRiver( board, hero, opp ); break;
+    }
+}
+
+namespace {
+struct EvaluateReult final {
+    double lhs {}, rhs {}, tie {}, sampleDeposit {};
+};
+
+struct ForEachEq final {
+    double hand {}, range {}, tie {};
+};
+
+inline EvaluateReult evalHandVsHandWithWeight(
+const RangeNode &                                  lhs,
+const RangeNode &                                  rhs,
+const Board &                                      board,
+std::function< Equity::Eq( Board, Hand, Hand ) > & evaluateFunc ) {
+    const Equity::Eq tmpEq = evaluateFunc( board, lhs.hand, rhs.hand );
+
+    const auto sampleDeposit = lhs.handWeight * rhs.handWeight;
+
+    return EvaluateReult { tmpEq.hero * sampleDeposit,
+                           tmpEq.opp * sampleDeposit,
+                           tmpEq.tie * sampleDeposit,
+                           sampleDeposit };
+}
+
+inline ForEachEq forEachRangeVsHand(
+const RangeNode &                                  hand,
+const Range &                                      handRange,
+const Board &                                      board,
+std::function< Equity::Eq( Board, Hand, Hand ) > & evaluateFunc ) {
+    ForEachEq totalEq { 0, 0, 0 };
+
+    double samplesCount { 0.0 };
+
+    for ( auto & oppNode : handRange ) {
+        const auto result =
+        evalHandVsHandWithWeight( hand, oppNode, board, evaluateFunc );
+
+        totalEq.hand += result.lhs;
+        totalEq.range += result.rhs;
+        totalEq.tie += result.tie;
+
+        samplesCount += result.sampleDeposit;
+    }
+
+    return { .hand  = totalEq.hand / samplesCount,
+             .range = totalEq.range / samplesCount,
+             .tie   = totalEq.tie / samplesCount };
+}
+}   // namespace
+
+void Equity::calculate( const Range & hero,
+                        const Range & opp,
+                        const Board & board ) {
+    /*
+	 * Range equity is arithmetic average.
+	 * e.g.:
+	 * 0 1 1 = (0+1+1)/3 = 2/3
+	 *
+	 * with weights range equity is eq*sampleDeposit,
+	 * where sampleDeposit is a multiply hero weight and opp weight.
+	 *
+	 * max hand number is 1326 ([52 cards] * [51 cards] / 2)
+	 *
+	 * 100% range vs 100% range is 1326*1325 = 1756950 max number samples
+	 */
+
+    std::function< Eq( Board, Hand, Hand ) > evaluateFunc;
+    switch ( board.getStreet() ) {
+    case Board::State::PREFLOP: evaluateFunc = calcPreflop; break;
+    case Board::State::FLOP: evaluateFunc = calcFlop; break;
+    case Board::State::TURN: evaluateFunc = calcTurn; break;
+    case Board::State::RIVER: evaluateFunc = calcRiver; break;
+    }
+
+    /*
+	 * total equity keep summaries of equity for every hands hero and opponent in the ranges.
+	 * total equity need to increment by multiply of equity and sample deposit.
+	 *
+	 * tie value is multiply sample deposit and sample tie value.
+	 */
+    Eq totalEq { 0, 0, 0 };
+
+    /*
+	 * samples count need to increment by multiply of a hero hand weight
+	 * and a opponent hand weight.
+	 */
+    double samplesCount { 0.0 };
+
+    for ( auto & heroNode : hero )
+        for ( auto & oppNode : opp ) {
+            const auto result =
+            evalHandVsHandWithWeight( heroNode, oppNode, board, evaluateFunc );
+
+            totalEq.hero += result.lhs;
+            totalEq.opp += result.rhs;
+            totalEq.tie += result.tie;
+
+            samplesCount += result.sampleDeposit;
+        }
+
+    eq.hero = totalEq.hero / samplesCount;
+    eq.opp  = totalEq.opp / samplesCount;
+    eq.tie  = totalEq.tie / samplesCount;
+}
+
+void Equity::calculate( const RangeNode & hero,
+                        const Range &     opp,
+                        const Board &     board ) {
+    std::function< Eq( Board, Hand, Hand ) > evaluateFunc;
+    switch ( board.getStreet() ) {
+    case Board::State::PREFLOP: evaluateFunc = calcPreflop; break;
+    case Board::State::FLOP: evaluateFunc = calcFlop; break;
+    case Board::State::TURN: evaluateFunc = calcTurn; break;
+    case Board::State::RIVER: evaluateFunc = calcRiver; break;
+    }
+
+    const auto forEachEq = forEachRangeVsHand( hero, opp, board, evaluateFunc );
+
+    eq.hero = forEachEq.hand;
+    eq.opp  = forEachEq.range;
+    eq.tie  = forEachEq.tie;
+}
+
+void Equity::calculate( const Range &     hero,
+                        const RangeNode & opp,
+                        const Board &     board ) {
+    std::function< Eq( Board, Hand, Hand ) > evaluateFunc;
+    switch ( board.getStreet() ) {
+    case Board::State::PREFLOP: evaluateFunc = calcPreflop; break;
+    case Board::State::FLOP: evaluateFunc = calcFlop; break;
+    case Board::State::TURN: evaluateFunc = calcTurn; break;
+    case Board::State::RIVER: evaluateFunc = calcRiver; break;
+    }
+
+    const auto forEachEq = forEachRangeVsHand( opp, hero, board, evaluateFunc );
+
+    eq.hero = forEachEq.range;
+    eq.opp  = forEachEq.hand;
+    eq.tie  = forEachEq.tie;
 }
 
 Equity::Eq Equity::getEq() const { return eq; }
+
+std::string Equity::getEqAsStr() const {
+    return std::format(
+    "Hero eq = {}\tOpp eq = {}\t Tie = {}", eq.hero, eq.opp, eq.tie );
+}
 }   // namespace core::engine

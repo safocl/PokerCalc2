@@ -1,5 +1,5 @@
 /**
- *\file combo.cpp
+ *\file range.cpp
  *\copyright GPL-3.0-or-later
  *\author safocl (megaSafocl)
  *\date 2023
@@ -20,25 +20,19 @@
  PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "combo.hpp"
-#include "board.hpp"
-#include <stdexcept>
-#include <algorithm>
-
-namespace core::engine {
-Combo::Combo( Board b, Hand h ) { set( b, h ); }
-void Combo::set( Board b, Hand h ) {
-    if ( b.getStreet() != Board::State::FLOP &&
-         b.getStreet() != Board::State::TURN &&
-         b.getStreet() != Board::State::RIVER )
-        throw std::runtime_error( "In Combo::Combo() board is invalid" );
-
-    combo = b.getBoard();
-    combo.push_back( h.left() );
-    combo.push_back( h.right() );
-    std::sort( combo.begin(), combo.end() );
-}
-
-const std::vector< Card > & Combo::asSortedVector() const { return combo; }
-
-}   // namespace core::engine
+// #include "range.hpp"
+//
+// namespace core::engine {
+//
+// Equity::Eq calculate( const Range & hero,
+//                       const Range & opp,
+//                       const Board & board ) {}
+//
+// Equity::Eq calculate( const Hand &  hero,
+//                       const Range & opp,
+//                       const Board & board ) {}
+//
+// Equity::Eq calculate( const Range & hero,
+//                       const Hand &  opp,
+//                       const Board & board ) {}
+// }   // namespace core::engine

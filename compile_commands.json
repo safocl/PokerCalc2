@@ -1,37 +1,50 @@
 [
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/board.cpp.o -c /home/safff/Projects/PokerCalc2/src/board.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/board.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/card.cpp.o -c /home/safff/Projects/PokerCalc2/src/card.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/card.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/deck.cpp.o -c /home/safff/Projects/PokerCalc2/src/deck.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/deck.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/eval.cpp.o -c /home/safff/Projects/PokerCalc2/src/eval.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/eval.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/hand.cpp.o -c /home/safff/Projects/PokerCalc2/src/hand.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/hand.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/main.cpp.o -c /home/safff/Projects/PokerCalc2/src/main.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/main.cpp"
-},
-{
-  "directory": "/home/safff/Projects/PokerCalc2/build/src",
-  "command": "/usr/bin/c++   -Wall -Wextra -Wformat -Wformat-security -pedantic -pedantic-errors -Werror -g -fPIC -pie -fstack-protector -std=gnu++2a -o CMakeFiles/PokerCalc2.dir/strength.cpp.o -c /home/safff/Projects/PokerCalc2/src/strength.cpp",
-  "file": "/home/safff/Projects/PokerCalc2/src/strength.cpp"
-}
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/main.cpp.o -MF src/PokerCalc2.p/main.cpp.o.d -o src/PokerCalc2.p/main.cpp.o -c ../src/main.cpp",
+    "file": "../src/main.cpp",
+    "output": "src/PokerCalc2.p/main.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/card.cpp.o -MF src/PokerCalc2.p/card.cpp.o.d -o src/PokerCalc2.p/card.cpp.o -c ../src/card.cpp",
+    "file": "../src/card.cpp",
+    "output": "src/PokerCalc2.p/card.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/hand.cpp.o -MF src/PokerCalc2.p/hand.cpp.o.d -o src/PokerCalc2.p/hand.cpp.o -c ../src/hand.cpp",
+    "file": "../src/hand.cpp",
+    "output": "src/PokerCalc2.p/hand.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/deck.cpp.o -MF src/PokerCalc2.p/deck.cpp.o.d -o src/PokerCalc2.p/deck.cpp.o -c ../src/deck.cpp",
+    "file": "../src/deck.cpp",
+    "output": "src/PokerCalc2.p/deck.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/board.cpp.o -MF src/PokerCalc2.p/board.cpp.o.d -o src/PokerCalc2.p/board.cpp.o -c ../src/board.cpp",
+    "file": "../src/board.cpp",
+    "output": "src/PokerCalc2.p/board.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/equity.cpp.o -MF src/PokerCalc2.p/equity.cpp.o.d -o src/PokerCalc2.p/equity.cpp.o -c ../src/equity.cpp",
+    "file": "../src/equity.cpp",
+    "output": "src/PokerCalc2.p/equity.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/strength.cpp.o -MF src/PokerCalc2.p/strength.cpp.o.d -o src/PokerCalc2.p/strength.cpp.o -c ../src/strength.cpp",
+    "file": "../src/strength.cpp",
+    "output": "src/PokerCalc2.p/strength.cpp.o"
+  },
+  {
+    "directory": "/home/safocl/git/PokerCalc2/build",
+    "command": "c++ -Isrc/PokerCalc2.p -Isrc -I../src -fdiagnostics-color=always -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -Werror -std=c++20 -O0 -g -fPIE -Wformat -Wformat-security -fPIC -fstack-protector -MD -MQ src/PokerCalc2.p/combo.cpp.o -MF src/PokerCalc2.p/combo.cpp.o.d -o src/PokerCalc2.p/combo.cpp.o -c ../src/combo.cpp",
+    "file": "../src/combo.cpp",
+    "output": "src/PokerCalc2.p/combo.cpp.o"
+  }
 ]

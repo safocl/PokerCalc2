@@ -1,5 +1,5 @@
 /**
- *@file combo.hpp
+ *@file range.hpp
  *@copyright GPL-3.0-or-later
  *@author safocl (megaSafocl)
  *@date 2023
@@ -22,19 +22,28 @@
 
 #pragma once
 
-#include "board.hpp"
-#include "card.hpp"
 #include "hand.hpp"
-#include <vector>
+
+#include <unordered_set>
 
 namespace core::engine {
 
-class Combo final {
-    std::vector< Card > combo;
+/*
+ * Range should represent a hand set (container) with the weights of every hands.
+*/
 
-public:
-    Combo( Board, Hand );
-    void                        set( Board, Hand );
-    const std::vector< Card > & asSortedVector() const;
+struct RangeNode {
+    Hand   hand {};
+    double handWeight { 0.0 };
 };
+
+struct RangeNodeTraits {
+    struct Hash {
+        std::size_t operator()( const RangeNode & r ) const noexcept {
+            return std::invoke( HandTraits::Hash {}, r.hand );
+        }
+    };
+};
+
+using Range = std::unordered_set< RangeNode, RangeNodeTraits::Hash >;
 }   // namespace core::engine

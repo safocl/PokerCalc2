@@ -1,4 +1,4 @@
-#*@file CmakeLists.txt
+#*@file meson.build
 #*@copyright GPL-3.0-or-later
 #*@author safocl (megaSafocl)
 #*@date 2023
@@ -18,7 +18,16 @@
 #You should have received a copy of the GNU General Public License along with
 #PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
 
-add_executable(${PROJECT_NAME})
-file (GLOB cpps  *.cpp)
+src = files('main.cpp', 'card.cpp', 'hand.cpp', 'deck.cpp', 'board.cpp',
+      'equity.cpp', 'strength.cpp', 'combo.cpp')
 
-target_sources(${PROJECT_NAME} PRIVATE ${cpps})
+dep_thread = dependency('threads')
+
+executable('PokerCalc2', src,
+
+          cpp_args: ['-Wformat', '-Wformat-security', '-fPIC',
+                    # '-pedantic', '-pedantic-errors',
+                    '-fstack-protector'],
+
+          dependencies: dep_thread,
+  )

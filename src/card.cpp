@@ -1,64 +1,36 @@
+/**
+ *\file card.cpp
+ *\copyright GPL-3.0-or-later
+ *\author safocl (megaSafocl)
+ *\date 2023
+ *
+ * \detail \"Copyright safocl (megaSafocl) 2023\"
+ This file is part of PokerCalc2.
+
+ PokerCalc2 is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation, either version 3 of the License, or any later version.
+
+ PokerCalc2 is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License along with
+ PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include "card.hpp"
 
 namespace core::engine {
-Card::Card() : v( Value::UNINITIALIZE ), s( Suit::UNINITIALIZE ) {}
-Card::Card( Value v, Suit s ) : v { v }, s { s } {}
+// Card::Card() = default;
 
 void Card::print() const { std::cout << asStr().data() << std::endl; }
-
-bool Card::operator==( const Card & c ) const {
-    return eqValue( c ) && eqSuit( c );
-}
-
-bool Card::operator<( const Card & c ) const { return v < c.v; }
-
-bool Card::operator>( const Card & c ) const { return v > c.v; }
-Card Card::operator++() {
-    if ( static_cast< int >( v ) == VALUE_MAX ) {
-        v = Value::v2;
-        return Card( Value::vA, s );
-    }
-    auto tmp  = v;
-    auto intv = static_cast< int >( v ) + 1;
-    v         = static_cast< Value >( intv );
-    return Card( tmp, s );
-}
-Card Card::operator++( int ) {
-    if ( static_cast< int >( v ) == VALUE_MAX ) {
-        v = Value::v2;
-        return Card( *this );
-    }
-    auto intv = static_cast< int >( v ) + 1;
-    v         = static_cast< Value >( intv );
-    return Card( *this );
-}
-Card Card::operator--() {
-    if ( static_cast< int >( v ) == VALUE_MIN ) {
-        v = Value::vA;
-        return Card( *this );
-    }
-    auto tmp  = v;
-    auto intv = static_cast< int >( v ) - 1;
-    v         = static_cast< Value >( intv );
-    return Card( tmp, s );
-}
-Card Card::operator--( int ) {
-    if ( static_cast< int >( v ) == VALUE_MIN ) {
-        v = Value::vA;
-        return Card( Value::vA, s );
-    }
-    auto intv = static_cast< int >( v ) - 1;
-    v         = static_cast< Value >( intv );
-    return Card( *this );
-}
-
-bool Card::eqValue( const Card & c ) const { return v == c.v; }
-
-bool Card::eqSuit( const Card & c ) const { return s == c.s; }
 
 std::string Card::asStr() const {
     std::string str;
@@ -78,8 +50,9 @@ std::string Card::asStr() const {
     case Value::vA: str = "A"; break;
     default:
         throw std::runtime_error(
-        "the card::as() method is called for a invalid card" );
+        "the card::asStr() method is called for a invalid card value" );
     }
+
     switch ( s ) {
     case Suit::c: str += "c"; break;
     case Suit::h: str += "h"; break;
@@ -87,8 +60,13 @@ std::string Card::asStr() const {
     case Suit::d: str += "d"; break;
     default:
         throw std::runtime_error(
-        "the card::as() method is called for a invalid card" );
+        "the card::asStr() method is called for a invalid card suite" );
     }
+
     return str;
 }   // namespace core::engine
+
+Value Card::getValue() const { return v; }
+
+Suit Card::getSuit() const { return s; }
 }   // namespace core::engine

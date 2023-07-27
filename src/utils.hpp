@@ -1,5 +1,5 @@
 /**
- *@file combo.hpp
+ *@file utils.hpp
  *@copyright GPL-3.0-or-later
  *@author safocl (megaSafocl)
  *@date 2023
@@ -22,19 +22,9 @@
 
 #pragma once
 
-#include "board.hpp"
-#include "card.hpp"
-#include "hand.hpp"
-#include <vector>
+#include <type_traits>
 
-namespace core::engine {
-
-class Combo final {
-    std::vector< Card > combo;
-
-public:
-    Combo( Board, Hand );
-    void                        set( Board, Hand );
-    const std::vector< Card > & asSortedVector() const;
-};
-}   // namespace core::engine
+template < class Enum >
+constexpr std::underlying_type_t< Enum > to_underlying( Enum e ) noexcept {
+    return static_cast< std::underlying_type_t< Enum > >( e );
+}
