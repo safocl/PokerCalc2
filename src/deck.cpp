@@ -57,5 +57,7 @@ Card Deck::takeCard( Card c ) {
     return c;
 }
 
+void Deck::cardFold( Card card ) { deck.at( card ) = true; }
+
 bool Deck::isAvaibleCard( const Card & c ) const { return deck.at( c ); }
 }   // namespace core::engine

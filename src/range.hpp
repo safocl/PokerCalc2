@@ -22,8 +22,12 @@
 
 #pragma once
 
+#include "card.hpp"
 #include "hand.hpp"
+#include "utils.hpp"
 
+#include <iostream>
+#include <cmath>
 #include <unordered_set>
 
 namespace core::engine {
@@ -37,6 +41,11 @@ struct RangeNode {
     double handWeight { 0.0 };
 };
 
+inline bool operator==( const RangeNode & lhs, const RangeNode & rhs ) {
+    return lhs.hand == rhs.hand &&
+           !std::islessgreater( lhs.handWeight, rhs.handWeight );
+}
+
 struct RangeNodeTraits {
     struct Hash {
         std::size_t operator()( const RangeNode & r ) const noexcept {
@@ -46,4 +55,6 @@ struct RangeNodeTraits {
 };
 
 using Range = std::unordered_set< RangeNode, RangeNodeTraits::Hash >;
+
+std::string to_string( const Range & r );
 }   // namespace core::engine

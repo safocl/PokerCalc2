@@ -19,7 +19,7 @@
 #PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
 
 src = files('main.cpp', 'card.cpp', 'hand.cpp', 'deck.cpp', 'board.cpp',
-      'equity.cpp', 'strength.cpp', 'combo.cpp')
+      'equity.cpp', 'strength.cpp', 'combo.cpp', 'range.cpp')
 
 dep_thread = dependency('threads')
 

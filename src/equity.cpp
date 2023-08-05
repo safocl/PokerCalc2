@@ -22,12 +22,15 @@
 
 #include "equity.hpp"
 #include "combo.hpp"
+#include "deck.hpp"
 #include "range.hpp"
 #include "strength.hpp"
 
+#include <exception>
 #include <format>
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <iterator>
 #include <vector>
 
@@ -165,8 +168,8 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
     auto const heroStrengthVal = heroStrength.getStrength().value;
     auto const oppStrengthVal  = oppStrength.getStrength().value;
 
-    if ( heroStrengthVal & Strength::STRAIT_FLUSH ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH )
+    if ( heroStrengthVal == Strength::STRAIT_FLUSH ) {
+        if ( oppStrengthVal == Strength::STRAIT_FLUSH )
             eq = sameStraitFlushEq();
         else {
             eq.hero = 1.0;
@@ -175,12 +178,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::CARE ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ) {
+    else if ( heroStrengthVal == Strength::CARE ) {
+        if ( oppStrengthVal == Strength::STRAIT_FLUSH ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::CARE ) {
+        } else if ( oppStrengthVal == Strength::CARE ) {
             eq = sameCareEq();
         } else {
             eq.hero = 1.0;
@@ -189,13 +192,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::FULL_HOUSE ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ) {
+    else if ( heroStrengthVal == Strength::FULL_HOUSE ) {
+        if ( oppStrengthVal > Strength::FULL_HOUSE ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::FULL_HOUSE ) {
+        } else if ( oppStrengthVal == Strength::FULL_HOUSE ) {
             eq = sameFullHouseEq();
         } else {
             eq.hero = 1.0;
@@ -204,14 +206,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::FLUSH ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ||
-             oppStrengthVal & Strength::FULL_HOUSE ) {
+    else if ( heroStrengthVal == Strength::FLUSH ) {
+        if ( oppStrengthVal > Strength::FLUSH ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::FLUSH ) {
+        } else if ( oppStrengthVal == Strength::FLUSH ) {
             eq = sameFlushEq();
         } else {
             eq.hero = 1.0;
@@ -220,15 +220,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::STRAIT ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ||
-             oppStrengthVal & Strength::FULL_HOUSE ||
-             oppStrengthVal & Strength::FLUSH ) {
+    else if ( heroStrengthVal == Strength::STRAIT ) {
+        if ( oppStrengthVal > Strength::STRAIT ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::STRAIT ) {
+        } else if ( oppStrengthVal == Strength::STRAIT ) {
             eq = sameStraitEq();
         } else {
             eq.hero = 1.0;
@@ -237,16 +234,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::SET ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ||
-             oppStrengthVal & Strength::FULL_HOUSE ||
-             oppStrengthVal & Strength::FLUSH ||
-             oppStrengthVal & Strength::STRAIT ) {
+    else if ( heroStrengthVal == Strength::SET ) {
+        if ( oppStrengthVal > Strength::SET ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::SET ) {
+        } else if ( oppStrengthVal == Strength::SET ) {
             eq = sameSetEq();
         } else {
             eq.hero = 1.0;
@@ -255,16 +248,12 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
     }
 
-    else if ( heroStrengthVal & Strength::TWO_PAIRS ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ||
-             oppStrengthVal & Strength::FULL_HOUSE ||
-             oppStrengthVal & Strength::FLUSH || oppStrengthVal & Strength::STRAIT ||
-             oppStrengthVal & Strength::SET ) {
+    else if ( heroStrengthVal == Strength::TWO_PAIRS ) {
+        if ( oppStrengthVal > Strength::TWO_PAIRS ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::TWO_PAIRS ) {
+        } else if ( oppStrengthVal == Strength::TWO_PAIRS ) {
             eq = sameTwoPairsEq();
         } else {
             eq.hero = 1.0;
@@ -274,16 +263,11 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
     }
 
     else if ( heroStrengthVal & Strength::PAIR ) {
-        if ( oppStrengthVal & Strength::STRAIT_FLUSH ||
-             oppStrengthVal & Strength::CARE ||
-             oppStrengthVal & Strength::FULL_HOUSE ||
-             oppStrengthVal & Strength::FLUSH || oppStrengthVal & Strength::STRAIT ||
-             oppStrengthVal & Strength::SET ||
-             oppStrengthVal & Strength::TWO_PAIRS ) {
+        if ( oppStrengthVal > Strength::PAIR ) {
             eq.hero = 0.0;
             eq.opp  = 1.0;
             eq.tie  = 0.0;
-        } else if ( oppStrengthVal & Strength::PAIR ) {
+        } else if ( oppStrengthVal == Strength::PAIR ) {
             eq = samePairEq();
         } else {
             eq.hero = 1.0;
@@ -310,8 +294,8 @@ Equity::Eq calcRiver( Board board, Hand hero, Hand opp ) {
         }
 
         else {
-            eq.hero = 1.0;
-            eq.opp  = 1.0;
+            eq.hero = 0.5;
+            eq.opp  = 0.5;
             eq.tie  = 1.0;
         }
     }
@@ -362,7 +346,18 @@ std::function< Equity::Eq( Board, Hand, Hand ) > & evaluateFunc ) {
 
     double samplesCount { 0.0 };
 
+    Deck deck;
+    for ( const auto & card : board.getBoard() )
+        deck.takeCard( card );
+
+    deck.takeCard( hand.hand.right() );
+    deck.takeCard( hand.hand.left() );
+
     for ( auto & oppNode : handRange ) {
+        if ( !deck.isAvaibleCard( oppNode.hand.right() ) ||
+             !deck.isAvaibleCard( oppNode.hand.left() ) )
+            continue;
+
         const auto result =
         evalHandVsHandWithWeight( hand, oppNode, board, evaluateFunc );
 
@@ -417,8 +412,23 @@ void Equity::calculate( const Range & hero,
 	 */
     double samplesCount { 0.0 };
 
-    for ( auto & heroNode : hero )
+    Deck deck;
+    for ( const auto & card : board.getBoard() )
+        deck.takeCard( card );
+
+    for ( auto & heroNode : hero ) {
+        if ( !deck.isAvaibleCard( heroNode.hand.right() ) ||
+             !deck.isAvaibleCard( heroNode.hand.left() ) )
+            continue;
+
+        deck.takeCard( heroNode.hand.right() );
+        deck.takeCard( heroNode.hand.left() );
+
         for ( auto & oppNode : opp ) {
+            if ( !deck.isAvaibleCard( oppNode.hand.right() ) ||
+                 !deck.isAvaibleCard( oppNode.hand.left() ) )
+                continue;
+
             const auto result =
             evalHandVsHandWithWeight( heroNode, oppNode, board, evaluateFunc );
 
@@ -428,6 +438,10 @@ void Equity::calculate( const Range & hero,
 
             samplesCount += result.sampleDeposit;
         }
+
+        deck.cardFold( heroNode.hand.right() );
+        deck.cardFold( heroNode.hand.left() );
+    }
 
     eq.hero = totalEq.hero / samplesCount;
     eq.opp  = totalEq.opp / samplesCount;

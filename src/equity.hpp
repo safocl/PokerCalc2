@@ -30,7 +30,7 @@ namespace core::engine {
 class Equity final {
 public:
     struct Eq final {
-        double hero, opp, tie;
+        double hero {}, opp {}, tie {};
     };
 
 private:

@@ -28,7 +28,7 @@ namespace core::engine {
 Hand::Hand( Card l, Card r ) : h { l, r } { assert( l != r && "Cards is equial" ); }
 
 bool Hand::operator==( const Hand & o ) const {
-    return ( h.first == o.h.first && h.second == o.h.second ) &&
+    return ( h.first == o.h.first && h.second == o.h.second ) ||
            ( h.first == o.h.second && h.second == o.h.first );
 }
 

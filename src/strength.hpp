@@ -91,4 +91,9 @@ inline auto operator&( Strength::Strengthes lhs, Strength::Strengthes rhs )
 -> decltype( to_underlying( lhs ) ) {
     return to_underlying( lhs ) & to_underlying( rhs );
 }
+
+inline auto operator<=>( Strength::Strengthes lhs, Strength::Strengthes rhs ) {
+    return ( Strength::Strengthes::COMPLITED_HAND_MASK & lhs ) <=>
+           ( Strength::Strengthes::COMPLITED_HAND_MASK & rhs );
+}
 }   // namespace core::engine

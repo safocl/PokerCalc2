@@ -33,43 +33,112 @@
 #include "deck.hpp"
 #include "card.hpp"
 #include "strength.hpp"
+#include "range.hpp"
 
 int main() {
     using namespace core::engine;
 
     Deck deck;
 
-    //#include "unittests/card"
-    constexpr Card c8c { Value::v7, Suit::c };
-    constexpr Card cAd { Value::v7, Suit::d };
-    Hand           hero { deck.takeCard( c8c ), deck.takeCard( cAd ) };
+    auto handsForRanges = std::array {
+        Hand( { Value::vK, Suit::s }, { Value::vQ, Suit::d } ),
+        Hand( { Value::v4, Suit::s }, { Value::vQ, Suit::s } ),
+        Hand( { Value::vK, Suit::s }, { Value::vQ, Suit::h } ),
+        Hand( { Value::vK, Suit::s }, { Value::vQ, Suit::c } ),
+        Hand( { Value::v3, Suit::d }, { Value::vQ, Suit::d } ),
+        Hand( { Value::vK, Suit::d }, { Value::vQ, Suit::s } ),
+        Hand( { Value::vK, Suit::d }, { Value::vQ, Suit::h } ),
+        Hand( { Value::vK, Suit::d }, { Value::vQ, Suit::c } ),
+        Hand( { Value::vK, Suit::h }, { Value::vQ, Suit::d } ),
+        Hand( { Value::vK, Suit::h }, { Value::vQ, Suit::s } ),
+        Hand( { Value::v3, Suit::h }, { Value::vQ, Suit::h } ),
+        Hand( { Value::vK, Suit::h }, { Value::vQ, Suit::c } ),
+        Hand( { Value::vK, Suit::c }, { Value::vQ, Suit::d } ),
+        Hand( { Value::vK, Suit::c }, { Value::vQ, Suit::s } ),
+        Hand( { Value::vK, Suit::c }, { Value::vQ, Suit::h } ),
+        Hand( { Value::v8, Suit::c }, { Value::vQ, Suit::c } ),
+        Hand( { Value::vQ, Suit::d }, { Value::vT, Suit::d } ),
+        Hand( { Value::vQ, Suit::s }, { Value::vT, Suit::s } ),
+        Hand( { Value::vQ, Suit::h }, { Value::vT, Suit::h } ),
+        Hand( { Value::vQ, Suit::c }, { Value::vT, Suit::c } ),
+        Hand( { Value::vT, Suit::d }, { Value::vT, Suit::c } ),
+        Hand( { Value::vT, Suit::d }, { Value::vT, Suit::s } ),
+        Hand( { Value::vT, Suit::d }, { Value::vT, Suit::h } ),
+        Hand( { Value::vT, Suit::s }, { Value::vT, Suit::c } ),
+        Hand( { Value::vT, Suit::s }, { Value::vT, Suit::h } ),
+        Hand( { Value::vT, Suit::h }, { Value::vT, Suit::c } ),
+    };
 
-    Hand opp { deck.takeCard( { Value::v2, Suit::h } ),
-               deck.takeCard( { Value::v6, Suit::s } ) };
+    Range hero {
+        RangeNode { .hand = handsForRanges[ 0 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 1 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 2 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 3 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 4 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 5 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 6 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 7 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 8 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 9 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 10 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 11 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 12 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 13 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 14 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 15 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 16 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 17 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 18 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 19 ], .handWeight = 1.0 },
+        RangeNode { .hand = handsForRanges[ 20 ], .handWeight = 0.5 },
+        RangeNode { .hand = handsForRanges[ 21 ], .handWeight = 0.5 },
+        RangeNode { .hand = handsForRanges[ 22 ], .handWeight = 0.5 },
+        RangeNode { .hand = handsForRanges[ 23 ], .handWeight = 0.5 },
+        RangeNode { .hand = handsForRanges[ 24 ], .handWeight = 0.5 },
+        RangeNode { .hand = handsForRanges[ 25 ], .handWeight = 0.5 },
+    };
+    std::cout << to_string( hero ) << std::endl;
 
-    const std::array cards = { deck.takeCard( { Value::v8, Suit::d } ),
-                               deck.takeCard( { Value::v9, Suit::s } ),
-                               deck.takeCard( { Value::v7, Suit::h } ),
-                               deck.takeCard( { Value::vQ, Suit::d } ),
-                               deck.takeCard( { Value::vK, Suit::s } ) };
+    /*
+    Range opp {
+        // RangeNode { .hand = handsForRanges[ 12 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 13 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 14 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 15 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 16 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 17 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 18 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 19 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 20 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 21 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 22 ], .handWeight = 1.0 },
+        // RangeNode { .hand = handsForRanges[ 23 ], .handWeight = 1.0 },
+        RangeNode { .hand = Hand( { Value::vK, Suit::d }, { Value::vA, Suit::s } ),
+                    .handWeight = 1.0 },
+
+    };
+
+    const std::array boardCards = { deck.takeCard( { Value::v8, Suit::d } ),
+                                    deck.takeCard( { Value::v9, Suit::s } ),
+                                    deck.takeCard( { Value::v7, Suit::h } ),
+                                    deck.takeCard( { Value::vQ, Suit::d } ),
+                                    deck.takeCard( { Value::vK, Suit::s } ) };
 
     Board board;
 
-    board.setFlop( cards[ 0 ], cards[ 1 ], cards[ 2 ] );
-    board.setTurn( cards[ 3 ] );
-    board.setRiver( cards[ 4 ] );
+    board.setFlop( boardCards[ 0 ], boardCards[ 1 ], boardCards[ 2 ] );
+    board.setTurn( boardCards[ 3 ] );
+    board.setRiver( boardCards[ 4 ] );
 
     Equity eq;
     eq.calculate( hero, opp, board );
 
     std::cout << std::format(
-    "Board {}\nHero: {}\tstrength is {}\nOpp: {}\tstrength is {}\nEquity is {}\n",
+    "Board {}\nHero range is: [{}]\nOpp range is: [{}]\nEquity is {}\n",
     board.asStr(),
-    hero.asStr(),
-    to_string( Strength().calc( board, hero ).value ),
-    opp.asStr(),
-    to_string( Strength().calc( board, opp ).value ),
+    to_string( hero ),
+    to_string( opp ),
     eq.getEqAsStr() );
-
+ */
     return EXIT_SUCCESS;
 }

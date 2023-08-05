@@ -43,6 +43,22 @@ enum class Suit : u8 {
     MIN          = 1
 };
 
+inline std::string to_string( Suit s ) {
+    std::string str;
+
+    switch ( s ) {
+    case Suit::c: str = "c"; break;
+    case Suit::h: str = "h"; break;
+    case Suit::s: str = "s"; break;
+    case Suit::d: str = "d"; break;
+    default:
+        throw std::runtime_error(
+        "the card::asStr() method is called for a invalid card suite" );
+    }
+
+    return str;
+}
+
 enum class Value : u16 {
     UNINITIALIZE = 0,
     v2           = /*1 <<*/ 1,
@@ -61,6 +77,55 @@ enum class Value : u16 {
     MAX          = 13,
     MIN          = 1
 };
+
+inline std::string to_string( Value v ) {
+    std::string str;
+
+    switch ( v ) {
+    case Value::v2: str = "2"; break;
+    case Value::v3: str = "3"; break;
+    case Value::v4: str = "4"; break;
+    case Value::v5: str = "5"; break;
+    case Value::v6: str = "6"; break;
+    case Value::v7: str = "7"; break;
+    case Value::v8: str = "8"; break;
+    case Value::v9: str = "9"; break;
+    case Value::vT: str = "T"; break;
+    case Value::vJ: str = "J"; break;
+    case Value::vQ: str = "Q"; break;
+    case Value::vK: str = "K"; break;
+    case Value::vA: str = "A"; break;
+    default:
+        throw std::runtime_error(
+        "the card::asStr() method is called for a invalid card value" );
+    }
+
+    return str;
+}
+
+inline constexpr auto operator<=>( Value lhs, Value rhs ) {
+    return to_underlying( lhs ) <=> to_underlying( rhs );
+}
+
+inline constexpr auto operator<=>( Suit lhs, Suit rhs ) {
+    return to_underlying( lhs ) <=> to_underlying( rhs );
+}
+
+inline constexpr auto operator+( Suit lhs, std::underlying_type_t< Suit > rhs ) {
+    return static_cast< Suit >( to_underlying( lhs ) + rhs );
+}
+
+inline constexpr auto operator-( Suit lhs, std::underlying_type_t< Suit > rhs ) {
+    return static_cast< Suit >( to_underlying( lhs ) - rhs );
+}
+
+inline constexpr auto operator+( Value lhs, std::underlying_type_t< Value > rhs ) {
+    return static_cast< Value >( to_underlying( lhs ) + rhs );
+}
+
+inline constexpr auto operator-( Value lhs, std::underlying_type_t< Value > rhs ) {
+    return static_cast< Value >( to_underlying( lhs ) - rhs );
+}
 
 class Card final {
     Value v { Value::UNINITIALIZE };
@@ -122,30 +187,6 @@ private:
     v( Value { v } ),
     s( Suit { s } ) {}
 };
-
-inline constexpr auto operator<=>( Value lhs, Value rhs ) {
-    return to_underlying( lhs ) <=> to_underlying( rhs );
-}
-
-inline constexpr auto operator<=>( Suit lhs, Suit rhs ) {
-    return to_underlying( lhs ) <=> to_underlying( rhs );
-}
-
-inline constexpr auto operator+( Suit lhs, std::underlying_type_t< Suit > rhs ) {
-    return static_cast< Suit >( to_underlying( lhs ) + rhs );
-}
-
-inline constexpr auto operator-( Suit lhs, std::underlying_type_t< Suit > rhs ) {
-    return static_cast< Suit >( to_underlying( lhs ) - rhs );
-}
-
-inline constexpr auto operator+( Value lhs, std::underlying_type_t< Value > rhs ) {
-    return static_cast< Value >( to_underlying( lhs ) + rhs );
-}
-
-inline constexpr auto operator-( Value lhs, std::underlying_type_t< Value > rhs ) {
-    return static_cast< Value >( to_underlying( lhs ) - rhs );
-}
 
 /// @brief Common traits for Cards
 struct CardTraits {

@@ -45,5 +45,6 @@ public:
 
     bool isAvaibleCard( const Card & ) const;
     Card takeCard( Card );
+    void cardFold( Card );
 };
 }   // namespace core::engine
