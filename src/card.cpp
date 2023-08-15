@@ -42,7 +42,4 @@ std::string Card::asStr() const {
     return str;
 }   // namespace core::engine
 
-Value Card::getValue() const { return v; }
-
-Suit Card::getSuit() const { return s; }
 }   // namespace core::engine

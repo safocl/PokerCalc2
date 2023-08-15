@@ -22,7 +22,7 @@ project('PokerCalc2',
         'cpp',
 
         default_options: ['werror=true', 'warning_level=3', 'b_pie=true',
-        'cpp_std=c++20'],
+        'cpp_std=c++23'],
 
         license: 'GPL-3.0-or-later',
         license_files: ['COPYRIGHT', 'COPYING', 'LICENSE']

@@ -1,10 +1,10 @@
 /**
- *\file range.cpp
- *\copyright GPL-3.0-or-later
- *\author safocl (megaSafocl)
- *\date 2023
+ *@file range.cpp
+ *@copyright GPL-3.0-or-later
+ *@author safocl (megaSafocl)
+ *@date 2023
  *
- * \detail \"Copyright safocl (megaSafocl) 2023\"
+ *@detail \"Copyright safocl (megaSafocl) 2023\"
  This file is part of PokerCalc2.
 
  PokerCalc2 is free software: you can redistribute it and/or modify it under
@@ -20,18 +20,30 @@
  PokerCalc2. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <format>
-#include <optional>
+#include <iterator>
 #include <ranges>
+#include <set>
+#include <format>
 #include <string>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
+// #include <type_traits>
 
 #include "range.hpp"
+#include "card.hpp"
+#include "utils.hpp"
+
+namespace rng  = std::ranges;
+namespace rngw = rng::views;
 
 namespace core::engine {
 
+namespace {
 constexpr std::size_t forAllArraySize     = 16;
 constexpr std::size_t forSuitArraySize    = 4;
 constexpr std::size_t forOffsuitArraySize = 12;
@@ -42,7 +54,11 @@ using ArrayForSuit    = std::array< Hand, forSuitArraySize >;
 using ArrayForOffsuit = std::array< Hand, forOffsuitArraySize >;
 using ArrayForPair    = std::array< Hand, forPairArraySize >;
 
-namespace {
+using SameWeightHands       = std::unordered_set< Hand >;
+using SplitedRangesByWeight = std::vector< std::pair< double, SameWeightHands > >;
+
+constexpr std::string serializeDelimiter { ", " };
+
 inline ArrayForAll patternArrayForAll( Value lhs, Value rhs ) {
     return ArrayForAll { Hand( { lhs, Suit::s }, { rhs, Suit::d } ),
                          Hand( { lhs, Suit::s }, { rhs, Suit::s } ),
@@ -96,30 +112,88 @@ inline ArrayForAll patternArrayForAll( Value lhs, Value rhs ) {
     };
 }
 
-template < std::size_t PatternArraySize >
-std::optional< std::vector< Range::const_iterator > >
-matchPatternArrayHandsInRange( const Range &                           r,
-                               std::array< Hand, PatternArraySize > && patternArray,
-                               double                                  handWeight ) {
-    std::vector< Range::const_iterator > matchedElements;
+SplitedRangesByWeight splitRangeByWeight( const Range & r ) {
+    std::set< double > uniqueWeights;
 
-    bool isMatched = true;
+    for ( auto & rangeNode : r )
+        uniqueWeights.insert( rangeNode.handWeight );
 
-    for ( const auto & matchHand : patternArray ) {
-        matchedElements.push_back( r.find( RangeNode { matchHand, handWeight } ) );
+    SplitedRangesByWeight splitedRangeByWeight;
 
-        if ( matchedElements.back() == r.end() ) {
-            isMatched = false;
-            std::cout << "NOT CONTAIN\n\n";
-            break;
+    for ( auto uniqueValue : uniqueWeights ) {
+        SameWeightHands uniqueWeightRange;
+
+        auto weightedHands =
+        rngw::filter( r,
+                      [ uniqueValue ]( auto && el ) {
+                          return !std::islessgreater( el.handWeight, uniqueValue );
+                      } ) |
+        rngw::transform( []( auto && el ) { return el.hand; } );
+
+        rng::copy( weightedHands,
+                   std::inserter( uniqueWeightRange, uniqueWeightRange.begin() ) );
+
+        /*
+		 * or better range-based for sample?
+		 */
+        // for ( auto const & rn : r )
+        //     if ( !std::islessgreater( rn.handWeight, uniqueValue ) )
+        //         uniqueWeightRange.insert( rn.hand );
+
+        splitedRangeByWeight.push_back(
+        { uniqueValue, std::move( uniqueWeightRange ) } );
+    }
+
+    return splitedRangeByWeight;
+}
+
+std::string wrapToWeight( std::string_view handListStr, double handWeight ) {
+    handListStr.remove_suffix( serializeDelimiter.size() );
+    return std::format( "[{0:.1f}]{1}[/{0:.1f}]", handWeight * 100.0, handListStr );
+}
+
+std::pair< std::vector< SameWeightHands::const_iterator >, std::string >
+packHands( const SameWeightHands & hands, Value lhs, Value rhs ) {
+    std::vector< SameWeightHands::const_iterator > matchedHandsIteratorsOrEmpty;
+
+    std::string packedHandsByWeightStr;
+
+    if ( lhs == rhs ) {
+        matchedHandsIteratorsOrEmpty =
+        find_all( hands, patternArrayForPairs( lhs ) );
+
+        if ( !matchedHandsIteratorsOrEmpty.empty() ) {
+            packedHandsByWeightStr += to_string( lhs ) + to_string( rhs );
+        }
+
+    } else {
+        matchedHandsIteratorsOrEmpty =
+        find_all( hands, patternArrayForAll( lhs, rhs ) );
+
+        if ( !matchedHandsIteratorsOrEmpty.empty() ) {
+            packedHandsByWeightStr += to_string( lhs ) + to_string( rhs );
+        }
+
+        if ( matchedHandsIteratorsOrEmpty.empty() ) {
+            matchedHandsIteratorsOrEmpty =
+            find_all( hands, patternArrayForSuit( lhs, rhs ) );
+
+            if ( !matchedHandsIteratorsOrEmpty.empty() ) {
+                packedHandsByWeightStr += to_string( lhs ) + to_string( rhs ) + "s";
+            }
+        } else if ( matchedHandsIteratorsOrEmpty.empty() ) {
+            matchedHandsIteratorsOrEmpty =
+            find_all( hands, patternArrayForOffsuit( lhs, rhs ) );
+
+            if ( !matchedHandsIteratorsOrEmpty.empty() ) {
+                packedHandsByWeightStr += to_string( lhs ) + to_string( rhs ) + "o";
+            }
         }
     }
 
-    if ( !isMatched )
-        return {};
-
-    return { matchedElements };
+    return { matchedHandsIteratorsOrEmpty, packedHandsByWeightStr };
 }
+
 }   // namespace
 
 std::string to_string( const Range & r ) {
@@ -131,102 +205,62 @@ std::string to_string( const Range & r ) {
  *
  *
  * example : KhQs, KQ, KQs, KQo,
+ *
+ *
+ * algo prototype:
+ *	1. split range by hand Weight
+ *	2. in the every splited subrange do group the hands in the strings
+ *	3. concatenate all the subrange strings
  */
-    Range                      groupedHands { r };
     std::vector< std::string > groupedHandsStr;
 
-    for ( auto curIt = groupedHands.begin(); curIt != groupedHands.end(); ) {
-        const auto nodeLeftCard  = curIt->hand.left().getValue();
-        const auto nodeRightCard = curIt->hand.right().getValue();
+    auto splitedRangeByWeight = splitRangeByWeight( r );
 
-        std::optional< std::vector< Range::const_iterator > >
-        matchedHandsIteraorsOrNull;
+    for ( auto & groupedHands : splitedRangeByWeight ) {
+        const auto weightOfSplitedRange = groupedHands.first;
 
-        if ( nodeLeftCard == nodeRightCard ) {
-            matchedHandsIteraorsOrNull = matchPatternArrayHandsInRange(
-            groupedHands, patternArrayForPairs( nodeLeftCard ), curIt->handWeight );
+        std::string groupedHandsByWeightStr;
 
-            if ( matchedHandsIteraorsOrNull ) {
-                std::string tmpStr( to_string( nodeLeftCard ) +
-                                    to_string( nodeRightCard ) );
+        for ( auto curIt = groupedHands.second.begin();
+              curIt != groupedHands.second.end(); ) {
+            const auto nodeLeftCard  = curIt->left().getValue();
+            const auto nodeRightCard = curIt->right().getValue();
 
-                if ( std::isless( curIt->handWeight, 1.0 ) )
-                    tmpStr +=
-                    "[" + std::format( "{:.1f}", curIt->handWeight * 100.0 ) + "]";
+            auto [ matchedHandsIteratorsOrEmpty, packedHandsByWeightStr ] =
+            packHands( groupedHands.second, nodeLeftCard, nodeRightCard );
 
-                groupedHandsStr.push_back( tmpStr );
-            }
+            if ( !matchedHandsIteratorsOrEmpty.empty() ) {
+                groupedHandsByWeightStr +=
+                packedHandsByWeightStr + serializeDelimiter;
 
-        } else {
-            matchedHandsIteraorsOrNull = matchPatternArrayHandsInRange(
-            groupedHands,
-            patternArrayForAll( nodeLeftCard, nodeRightCard ),
-            curIt->handWeight );
-
-            if ( matchedHandsIteraorsOrNull ) {
-                std::string tmpStr( to_string( nodeLeftCard ) +
-                                    to_string( nodeRightCard ) );
-
-                if ( std::isless( curIt->handWeight, 1.0 ) )
-                    tmpStr +=
-                    "[" + std::format( "{:.1f}", curIt->handWeight * 100.0 ) + "]";
-
-                groupedHandsStr.push_back( tmpStr );
-            }
-
-            if ( !matchedHandsIteraorsOrNull ) {
-                matchedHandsIteraorsOrNull = matchPatternArrayHandsInRange(
-                groupedHands,
-                patternArrayForSuit( nodeLeftCard, nodeRightCard ),
-                curIt->handWeight );
-
-                if ( matchedHandsIteraorsOrNull ) {
-                    std::string tmpStr( to_string( nodeLeftCard ) +
-                                        to_string( nodeRightCard ) + "s" );
-
-                    if ( std::isless( curIt->handWeight, 1.0 ) )
-                        tmpStr +=
-                        "[" + std::format( "{:.1f}", curIt->handWeight * 100.0 ) +
-                        "]";
-
-                    groupedHandsStr.push_back( tmpStr );
+                for ( auto & matchHand : matchedHandsIteratorsOrEmpty ) {
+                    curIt = groupedHands.second.erase( matchHand );
                 }
-            }
-
-            if ( !matchedHandsIteraorsOrNull ) {
-                matchedHandsIteraorsOrNull = matchPatternArrayHandsInRange(
-                groupedHands,
-                patternArrayForOffsuit( nodeLeftCard, nodeRightCard ),
-                curIt->handWeight );
-
-                if ( matchedHandsIteraorsOrNull ) {
-                    std::string tmpStr( to_string( nodeLeftCard ) +
-                                        to_string( nodeRightCard ) + "o" );
-
-                    if ( std::isless( curIt->handWeight, 1.0 ) )
-                        tmpStr +=
-                        "[" + std::format( "{:.1f}", curIt->handWeight * 100.0 ) +
-                        "]";
-
-                    groupedHandsStr.push_back( tmpStr );
-                }
-            }
+            } else
+                ++curIt;
         }
 
-        if ( matchedHandsIteraorsOrNull )
-            for ( auto & matchHand : matchedHandsIteraorsOrNull.value() ) {
-                curIt = groupedHands.erase( matchHand );
-            }
-        else
-            ++curIt;
+        for ( auto & nonPackedHand : groupedHands.second )
+            groupedHandsByWeightStr += nonPackedHand.asStr() + serializeDelimiter;
+
+        if ( std::isless( weightOfSplitedRange, 1.0 ) ) {
+            groupedHandsByWeightStr =
+            wrapToWeight( groupedHandsByWeightStr, weightOfSplitedRange );
+
+            groupedHandsByWeightStr += serializeDelimiter;
+        }
+
+        groupedHandsStr.push_back( groupedHandsByWeightStr );
     }
 
-    for ( auto const & groupedStr : groupedHandsStr )
-        s += groupedStr + ", ";
+    for ( std::string_view packedHandsStr : groupedHandsStr ) {
+        s += packedHandsStr;
+    }
+    auto sv = std::string_view( s );
+    sv.remove_suffix( serializeDelimiter.size() );
 
-    for ( auto & rnode : groupedHands )
-        s += rnode.hand.asStr() + ", ";
-
-    return s;
+    return std::string( sv );
 }
+
+// Range from_string( std::string_view str ) { return {}; }
 }   // namespace core::engine

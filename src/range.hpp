@@ -34,6 +34,18 @@ namespace core::engine {
 
 /*
  * Range should represent a hand set (container) with the weights of every hands.
+ *
+ * range string for serilize-deserialize has view:
+ *		[percent]handRepresentation[/percent]
+ *
+ *	where a percent is weight and both the values must be are equial, and a
+ *	handRepresentation is tring representation of a hand or a hand group
+ *	or the list of a hand the list of the hand groups.
+ *
+ *	if a handRepresentation weight is 100% then a percent must not be specified.
+ *
+ *	examples:
+ *		[50]AsKh, KK[/50], 55, Jh3s
 */
 
 struct RangeNode {
@@ -42,19 +54,19 @@ struct RangeNode {
 };
 
 inline bool operator==( const RangeNode & lhs, const RangeNode & rhs ) {
-    return lhs.hand == rhs.hand &&
-           !std::islessgreater( lhs.handWeight, rhs.handWeight );
+    return lhs.hand == rhs.hand;
 }
 
-struct RangeNodeTraits {
-    struct Hash {
-        std::size_t operator()( const RangeNode & r ) const noexcept {
-            return std::invoke( HandTraits::Hash {}, r.hand );
-        }
-    };
-};
-
-using Range = std::unordered_set< RangeNode, RangeNodeTraits::Hash >;
+using Range = std::unordered_set< RangeNode >;
 
 std::string to_string( const Range & r );
+Range       from_string( std::string_view str );
 }   // namespace core::engine
+
+namespace std {
+template <> struct hash< core::engine::RangeNode > {
+    std::size_t operator()( const core::engine::RangeNode & r ) const noexcept {
+        return std::invoke( hash< core::engine::Hand >(), r.hand );
+    }
+};
+}   // namespace std

@@ -31,7 +31,7 @@
 
 namespace core::engine {
 class Deck final {
-    std::unordered_map< Card, bool, CardTraits::Hash > deck {};
+    std::unordered_map< Card, bool > deck {};
 
     void generate();
 

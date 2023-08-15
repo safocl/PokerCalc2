@@ -38,10 +38,10 @@ public:
     bool operator<( const Hand & ) const;
     bool operator>( const Hand & ) const;
 
-    Card low() const;
-    Card hight() const;
-    Card right() const;
-    Card left() const;
+    const Card & low() const;
+    const Card & hight() const;
+    const Card & right() const;
+    const Card & left() const;
 
     std::string asStr() const;
 
@@ -49,13 +49,6 @@ public:
 };
 
 struct HandTraits final {
-    struct Hash final {
-        std::size_t operator()( const Hand & h ) const {
-            return std::invoke( CardTraits::Hash(), h.h.first ) +
-                   std::invoke( CardTraits::Hash(), h.h.second );
-        }
-    };
-
     static bool isPair( const Hand & h );
     static bool isConnector( const Hand & h );
     static bool isGupConnector( const Hand & h );
@@ -64,3 +57,13 @@ struct HandTraits final {
     static bool isSingleSuit( const Hand & h );
 };
 }   // namespace core::engine
+
+namespace std {
+template <> struct hash< core::engine::Hand > {
+    std::size_t operator()( const core::engine::Hand & h ) const {
+        return std::invoke( std::hash< core::engine::Card >(), h.left() ) +
+               std::invoke( std::hash< core::engine::Card >(), h.right() );
+    }
+};
+
+}   // namespace std

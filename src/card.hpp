@@ -103,27 +103,27 @@ inline std::string to_string( Value v ) {
     return str;
 }
 
-inline constexpr auto operator<=>( Value lhs, Value rhs ) {
+constexpr auto operator<=>( Value lhs, Value rhs ) {
     return to_underlying( lhs ) <=> to_underlying( rhs );
 }
 
-inline constexpr auto operator<=>( Suit lhs, Suit rhs ) {
+constexpr auto operator<=>( Suit lhs, Suit rhs ) {
     return to_underlying( lhs ) <=> to_underlying( rhs );
 }
 
-inline constexpr auto operator+( Suit lhs, std::underlying_type_t< Suit > rhs ) {
+constexpr auto operator+( Suit lhs, std::underlying_type_t< Suit > rhs ) {
     return static_cast< Suit >( to_underlying( lhs ) + rhs );
 }
 
-inline constexpr auto operator-( Suit lhs, std::underlying_type_t< Suit > rhs ) {
+constexpr auto operator-( Suit lhs, std::underlying_type_t< Suit > rhs ) {
     return static_cast< Suit >( to_underlying( lhs ) - rhs );
 }
 
-inline constexpr auto operator+( Value lhs, std::underlying_type_t< Value > rhs ) {
+constexpr auto operator+( Value lhs, std::underlying_type_t< Value > rhs ) {
     return static_cast< Value >( to_underlying( lhs ) + rhs );
 }
 
-inline constexpr auto operator-( Value lhs, std::underlying_type_t< Value > rhs ) {
+constexpr auto operator-( Value lhs, std::underlying_type_t< Value > rhs ) {
     return static_cast< Value >( to_underlying( lhs ) - rhs );
 }
 
@@ -176,8 +176,8 @@ public:
     std::string asStr() const;
     void        print() const;
 
-    Value getValue() const;
-    Suit  getSuit() const;
+    constexpr Value getValue() const { return v; }
+    constexpr Suit  getSuit() const { return s; }
 
     friend struct CardTraits;
 
@@ -198,13 +198,6 @@ struct CardTraits {
     static constexpr Card sentinel { to_underlying( Value::MAX ) + 1,
                                      to_underlying( Suit::MAX ) + 1 };
     static constexpr Card begin { Value::MIN, Suit::MIN };
-
-    /// @brief Hash function (functor) for the std::unordered_map like contaners.
-    struct Hash {
-        constexpr std::size_t operator()( const Card & c ) const {
-            return to_underlying( c.v ) + to_underlying( c.s ) * 100;
-        }
-    };
 
     /// @brief Comparator for the std::map like contaners.
     struct CompareLess {
@@ -300,3 +293,13 @@ struct CardTraits {
     }
 };
 }   // namespace core::engine
+
+namespace std {
+/// @brief Hash function (functor) for the std::unordered_map like contaners.
+template <> struct hash< core::engine::Card > {
+    constexpr std::size_t operator()( const core::engine::Card & c ) const {
+        return to_underlying( c.getValue() ) + to_underlying( c.getSuit() ) * 100;
+    }
+};
+
+}   // namespace std

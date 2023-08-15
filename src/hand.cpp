@@ -44,13 +44,13 @@ bool Hand::operator>( const Hand & o ) const {
     return hight() > o.hight();
 }
 
-Card Hand::low() const { return h.first > h.second ? h.second : h.first; }
+const Card & Hand::low() const { return h.first > h.second ? h.second : h.first; }
 
-Card Hand::hight() const { return h.first < h.second ? h.second : h.first; }
+const Card & Hand::hight() const { return h.first < h.second ? h.second : h.first; }
 
-Card Hand::right() const { return h.second; }
+const Card & Hand::right() const { return h.second; }
 
-Card Hand::left() const { return h.first; }
+const Card & Hand::left() const { return h.first; }
 
 std::string Hand::asStr() const { return { left().asStr() + right().asStr() }; }
 
