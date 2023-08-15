@@ -22,10 +22,11 @@
 
 #pragma once
 
+#include <concepts>
 #include <iterator>
-#include <type_traits>
 #include <ranges>
 #include <algorithm>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -37,14 +38,19 @@ namespace core {
 //     return static_cast< std::underlying_type_t< Enum > >( e );
 // }
 
+template < class R, class U >
+concept hasFindMethod = requires( R r, U u ) { r.find( u ); };
+
 /*
  * @brief Algorithm returns range of the R1 constant iterators
  * which points to all matching elements with R2 range or std::nullopt.
  */
-template < std::ranges::input_range R1, std::ranges::forward_range R2 >
-constexpr std::vector< typename std::decay_t< R1 >::const_iterator >
-find_all( R1 && r, R2 && patterns ) {
-    using resultItType = typename std::decay_t< R1 >::const_iterator;
+template < std::ranges::forward_range R1, std::ranges::input_range R2 >
+    requires std::equality_comparable_with< std::ranges::range_value_t< R1 >,
+                                            std::ranges::range_value_t< R2 > >
+constexpr std::vector< std::ranges::iterator_t< R1 > > find_all( R1 && r,
+                                                                 R2 && patterns ) {
+    using resultItType = std::ranges::iterator_t< R1 >;
 
     std::vector< resultItType > matchedElements;
 
@@ -66,10 +72,17 @@ find_all( R1 && r, R2 && patterns ) {
     //         break;
     // }
 
-    auto isAllMatched =
-    std::ranges::all_of( patterns, [ &matchedElements, &r ]( auto && el ) {
-        auto findedIt = r.find( el );
-        if ( findedIt == r.end() )
+    auto isAllMatched = std::ranges::all_of(
+    patterns, [ &matchedElements, &r ]( [[maybe_unused]] auto && el ) {
+        resultItType findedIt;
+
+        if constexpr ( requires { r.find( el ); }
+                       /* hasFindMethod< R1, decltype( el ) > */ )
+            findedIt = r.find( el );
+        else
+            findedIt = std::ranges::find( r, el );
+
+        if ( findedIt == std::ranges::end( r ) )
             return false;
 
         matchedElements.push_back( findedIt );
